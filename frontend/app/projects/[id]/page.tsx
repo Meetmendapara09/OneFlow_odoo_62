@@ -1,7 +1,7 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 const PROJECTS = [
   { id: "p1", name: "Student Portal Revamp", description: "UI modernization and performance work for the student portal. This includes updating the design system, improving load times, and implementing new features requested by students.", manager: "A. Patel", status: "In Progress" as const, progress: 65, deadline: "2025-12-01", teamSize: 5, tasksCompleted: 13, totalTasks: 20, budget: 125000, spent: 78000 },
@@ -58,6 +58,49 @@ export default function ProjectDetailPage() {
   const team = useMemo(() => {
     return TEAM_MEMBERS[projectId as keyof typeof TEAM_MEMBERS] || [];
   }, [projectId]);
+
+  // Modal states
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [showManageTeamModal, setShowManageTeamModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
+
+  // Task form state
+  const [newTask, setNewTask] = useState({
+    title: "",
+    assignee: "",
+    dueDate: "",
+    priority: "Medium",
+    description: ""
+  });
+
+  // Team management state
+  const [newMember, setNewMember] = useState("");
+
+  // Handlers
+  const handleAddTask = () => {
+    console.log("Adding task:", newTask);
+    // TODO: Integrate with API
+    alert(`Task "${newTask.title}" added successfully!`);
+    setShowAddTaskModal(false);
+    setNewTask({ title: "", assignee: "", dueDate: "", priority: "Medium", description: "" });
+  };
+
+  const handleAddTeamMember = () => {
+    if (newMember.trim()) {
+      console.log("Adding team member:", newMember);
+      // TODO: Integrate with API
+      alert(`${newMember} added to the team!`);
+      setNewMember("");
+    }
+  };
+
+  const handleRemoveTeamMember = (member: string) => {
+    if (confirm(`Remove ${member} from the team?`)) {
+      console.log("Removing team member:", member);
+      // TODO: Integrate with API
+      alert(`${member} removed from the team!`);
+    }
+  };
 
   if (!project) {
     return (
@@ -327,40 +370,282 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="card card-warning">
-            <div className="card-body">
-              <h2 className="card-title mb-4">Quick Actions</h2>
-              <div className="space-y-2">
-                <Link href={`/projects?edit=${projectId}`} className="btn btn-outline btn-sm w-full justify-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit Project
-                </Link>
-                <button className="btn btn-outline btn-sm w-full justify-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Add Task
-                </button>
-                <button className="btn btn-outline btn-sm w-full justify-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                  Manage Team
-                </button>
-                <button className="btn btn-outline btn-sm w-full justify-start">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                  View Reports
+
+        </div>
+      </div>
+
+      {/* Add Task Modal */}
+      {showAddTaskModal && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-2xl">
+            <h3 className="font-bold text-lg mb-4">Add New Task</h3>
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label"><span className="label-text">Task Title *</span></label>
+                <input
+                  type="text"
+                  placeholder="Enter task title"
+                  className="input input-bordered w-full"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label"><span className="label-text">Description</span></label>
+                <textarea
+                  placeholder="Enter task description"
+                  className="textarea textarea-bordered h-24"
+                  value={newTask.description}
+                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="form-control">
+                  <label className="label"><span className="label-text">Assignee *</span></label>
+                  <select
+                    className="select select-bordered w-full"
+                    value={newTask.assignee}
+                    onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
+                  >
+                    <option value="">Select assignee</option>
+                    {team.map((member, index) => (
+                      <option key={index} value={member}>{member}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-control">
+                  <label className="label"><span className="label-text">Priority</span></label>
+                  <select
+                    className="select select-bordered w-full"
+                    value={newTask.priority}
+                    onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
+                  >
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-control">
+                <label className="label"><span className="label-text">Due Date *</span></label>
+                <input
+                  type="date"
+                  className="input input-bordered w-full"
+                  value={newTask.dueDate}
+                  onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button className="btn" onClick={() => setShowAddTaskModal(false)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleAddTask}
+                disabled={!newTask.title || !newTask.assignee || !newTask.dueDate}
+              >
+                Add Task
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowAddTaskModal(false)}></div>
+        </div>
+      )}
+
+      {/* Manage Team Modal */}
+      {showManageTeamModal && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-xl">
+            <h3 className="font-bold text-lg mb-4">Manage Team Members</h3>
+
+            {/* Current Team */}
+            <div className="mb-6">
+              <h4 className="font-semibold mb-3">Current Team ({team.length} members)</h4>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {team.map((member, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+                        {member[0]}
+                      </div>
+                      <div>
+                        <p className="font-medium">{member}</p>
+                        <p className="text-xs text-muted">
+                          {index === 0 ? "Project Manager" : "Team Member"}
+                        </p>
+                      </div>
+                    </div>
+                    {index !== 0 && (
+                      <button
+                        className="btn btn-ghost btn-sm btn-error"
+                        onClick={() => handleRemoveTeamMember(member)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Add New Member */}
+            <div className="mb-4">
+              <h4 className="font-semibold mb-3">Add New Member</h4>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter username or email"
+                  className="input input-bordered flex-1"
+                  value={newMember}
+                  onChange={(e) => setNewMember(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddTeamMember()}
+                />
+                <button
+                  className="btn btn-primary"
+                  onClick={handleAddTeamMember}
+                  disabled={!newMember.trim()}
+                >
+                  Add
                 </button>
               </div>
             </div>
+
+            <div className="modal-action">
+              <button className="btn" onClick={() => setShowManageTeamModal(false)}>Close</button>
+            </div>
           </div>
+          <div className="modal-backdrop" onClick={() => setShowManageTeamModal(false)}></div>
         </div>
-      </div>
+      )}
+
+      {/* View Reports Modal */}
+      {showReportsModal && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-4xl">
+            <h3 className="font-bold text-lg mb-4">Project Reports - {project.name}</h3>
+
+            <div className="tabs tabs-boxed mb-4">
+              <a className="tab tab-active">Financial</a>
+              <a className="tab">Progress</a>
+              <a className="tab">Team Performance</a>
+            </div>
+
+            {/* Financial Report */}
+            <div className="space-y-4">
+              <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
+                <div className="stat">
+                  <div className="stat-title">Total Budget</div>
+                  <div className="stat-value text-primary">${project.budget?.toLocaleString()}</div>
+                  <div className="stat-desc">Allocated funds</div>
+                </div>
+
+                <div className="stat">
+                  <div className="stat-title">Amount Spent</div>
+                  <div className="stat-value metric-cost">${project.spent?.toLocaleString()}</div>
+                  <div className="stat-desc">{budgetUsed.toFixed(0)}% of budget</div>
+                </div>
+
+                <div className="stat">
+                  <div className="stat-title">Remaining</div>
+                  <div className="stat-value metric-profit">${(project.budget - project.spent).toLocaleString()}</div>
+                  <div className="stat-desc">{(100 - budgetUsed).toFixed(0)}% available</div>
+                </div>
+              </div>
+
+              {/* Progress Chart */}
+              <div className="card bg-base-100 shadow">
+                <div className="card-body">
+                  <h4 className="card-title text-sm">Progress Overview</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Overall Progress</span>
+                        <span className="font-semibold">{project.progress}%</span>
+                      </div>
+                      <div className="progress progress-primary">
+                        <div className="progress-bar" style={{ width: `${project.progress}%` }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Tasks Completed</span>
+                        <span className="font-semibold">{project.tasksCompleted}/{project.totalTasks}</span>
+                      </div>
+                      <div className="progress progress-success">
+                        <div className="progress-bar" style={{ width: `${(project.tasksCompleted / project.totalTasks) * 100}%` }}></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Budget Utilization</span>
+                        <span className="font-semibold">{budgetUsed.toFixed(0)}%</span>
+                      </div>
+                      <div className="progress progress-warning">
+                        <div className="progress-bar" style={{ width: `${budgetUsed}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Key Metrics */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="card bg-base-100 shadow">
+                  <div className="card-body">
+                    <h4 className="card-title text-sm">Timeline</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted">Start Date</span>
+                        <span className="font-semibold">Nov 1, 2025</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted">Deadline</span>
+                        <span className="font-semibold">{new Date(project.deadline).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted">Days Remaining</span>
+                        <span className={`font-semibold ${isOverdue ? 'text-error' : ''}`}>
+                          {isOverdue ? 'Overdue' : `${daysLeft} days`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-base-100 shadow">
+                  <div className="card-body">
+                    <h4 className="card-title text-sm">Team Performance</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted">Team Size</span>
+                        <span className="font-semibold">{project.teamSize} members</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted">Avg. Tasks/Member</span>
+                        <span className="font-semibold">{(project.totalTasks / project.teamSize).toFixed(1)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted">Completion Rate</span>
+                        <span className="font-semibold">{((project.tasksCompleted / project.totalTasks) * 100).toFixed(0)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button className="btn btn-outline">Export PDF</button>
+              <button className="btn" onClick={() => setShowReportsModal(false)}>Close</button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowReportsModal(false)}></div>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,8 @@ package com.example.oneflow.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "idx_username", columnList = "username"),
@@ -26,6 +28,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private Role role = Role.TEAM_MEMBER; // Default role
+
+    @Column(name = "hourly_rate", precision = 10, scale = 2)
+    private BigDecimal hourlyRate; // For timesheet calculations
 
     public enum Role {
         SUPERADMIN,
