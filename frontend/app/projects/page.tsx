@@ -1,22 +1,16 @@
 "use client";
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
+import ProjectCard, { ProjectCardProps } from "@/components/ProjectCard";
 
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  manager: string;
-  status: "Planned" | "In Progress" | "Completed" | "On Hold";
-  progress: number;
-  deadline: string;
-}
+type Project = ProjectCardProps;
 
 const DATA: Project[] = [
-  { id: "p1", name: "Student Portal Revamp", description: "UI modernization and performance work.", manager: "A. Patel", status: "In Progress", progress: 55, deadline: "2025-12-01" },
-  { id: "p2", name: "HRMS Integration", description: "Sync HR data with core systems.", manager: "R. Singh", status: "Planned", progress: 10, deadline: "2026-01-15" },
-  { id: "p3", name: "Finance Workflows", description: "Streamline approvals and reporting.", manager: "S. Kumar", status: "On Hold", progress: 35, deadline: "2026-03-01" },
-  { id: "p4", name: "AI Pilot", description: "Internal experimentation with ML models.", manager: "N. Shah", status: "Completed", progress: 100, deadline: "2025-10-01" },
+  { id: "p1", name: "Student Portal Revamp", description: "UI modernization and performance work.", manager: "A. Patel", status: "In Progress", progress: 55, deadline: "2025-12-01", teamSize: 5, tasksCompleted: 12, totalTasks: 20 },
+  { id: "p2", name: "HRMS Integration", description: "Sync HR data with core systems.", manager: "R. Singh", status: "Planned", progress: 10, deadline: "2026-01-15", teamSize: 3, tasksCompleted: 2, totalTasks: 15 },
+  { id: "p3", name: "Finance Workflows", description: "Streamline approvals and reporting.", manager: "S. Kumar", status: "On Hold", progress: 35, deadline: "2026-03-01", teamSize: 4, tasksCompleted: 7, totalTasks: 18 },
+  { id: "p4", name: "AI Pilot", description: "Internal experimentation with ML models.", manager: "N. Shah", status: "Completed", progress: 100, deadline: "2025-10-01", teamSize: 6, tasksCompleted: 25, totalTasks: 25 },
+  { id: "p5", name: "Campus IoT Network", description: "Deploy IoT sensors across campus for smart building management.", manager: "V. Mehta", status: "In Progress", progress: 68, deadline: "2025-11-30", teamSize: 8, tasksCompleted: 17, totalTasks: 25 },
+  { id: "p6", name: "Library Management System", description: "Modernize library cataloging and borrowing system.", manager: "K. Desai", status: "Planned", progress: 5, deadline: "2026-02-01", teamSize: 4, tasksCompleted: 1, totalTasks: 22 },
 ];
 
 const STATUSES: Project["status"][] = ["Planned", "In Progress", "Completed", "On Hold"];
@@ -82,42 +76,20 @@ export default function ProjectsPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map(p => (
-          <div key={p.id} className="card bg-base-100 shadow border border-base-300 transition hover:shadow-lg">
-            <div className="card-body gap-3">
-              <div className="flex items-center justify-between">
-                <h2 className="card-title text-base">{p.name}</h2>
-                <span className={`badge ${
-                  p.status === "Completed" ? "badge-success" :
-                  p.status === "In Progress" ? "badge-info" :
-                  p.status === "Planned" ? "" : "badge-warning"
-                }`}>{p.status}</span>
-              </div>
-              <p className="text-sm text-base-content/70">{p.description}</p>
-              <div className="text-xs text-base-content/60">
-                <p>Manager: <span className="font-medium">{p.manager}</span></p>
-                <p>Deadline: {new Date(p.deadline).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span>Progress</span>
-                  <span>{p.progress}%</span>
-                </div>
-                <progress className="progress progress-primary w-full" value={p.progress} max={100} />
-              </div>
-              <div className="card-actions justify-end">
-                <Link href={`/projects/${p.id}`} className="btn btn-sm btn-primary">Open</Link>
-              </div>
-            </div>
-          </div>
+          <ProjectCard key={p.id} {...p} />
         ))}
-        {filtered.length === 0 && (
-          <div className="alert">
-            <span>No projects match your filters.</span>
-          </div>
-        )}
       </div>
+      
+      {filtered.length === 0 && (
+        <div className="alert alert-info">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>No projects match your filters.</span>
+        </div>
+      )}
     </div>
   );
 }
