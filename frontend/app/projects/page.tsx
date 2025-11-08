@@ -581,10 +581,9 @@ function ProjectsContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-[#F8FAFC] p-2 md:p-0">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-semibold">Projects</h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button 
             className="btn btn-ghost btn-sm" 
             onClick={handleUndo}
@@ -608,39 +607,51 @@ function ProjectsContent() {
           <input
             type="text"
             placeholder="Search projects"
-            className="input input-bordered"
+            className="input input-bordered w-48"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn btn-primary gap-2" onClick={() => setShowModal(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
             New Project
           </button>
         </div>
       </div>
-
-  <div className="stats shadow bg-base-100 rounded-box">
-        <div className="stat">
-          <div className="stat-title">Total</div>
-          <div className="stat-value text-primary">{stats.total}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">In Progress</div>
-          <div className="stat-value text-secondary">{stats.inProgress}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Completed</div>
-          <div className="stat-value">{stats.completed}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Planned</div>
-          <div className="stat-value">{stats.planned}</div>
-        </div>
+      {/* Metrics Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[{
+          label: 'Total Projects', value: stats.total, sub: `${stats.inProgress} active`
+        }, {
+          label: 'In Progress', value: stats.inProgress, sub: `${stats.completed} completed`
+        }, {
+          label: 'Completed', value: stats.completed, sub: `${stats.planned} planned`
+        }, {
+          label: 'Planned', value: stats.planned, sub: 'Upcoming pipeline'
+        }].map((m, i) => (
+          <div key={i} className="card bg-white border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
+            <div className="card-body p-4">
+              <h3 className="text-xs font-semibold tracking-wide uppercase text-[#64748B]">{m.label}</h3>
+              <p className="text-3xl font-bold text-[#2563EB] mt-1">{m.value}</p>
+              <p className="text-xs text-[#64748B] mt-1">{m.sub}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div role="tablist" className="tabs tabs-boxed">
-        <a role="tab" className={`tab ${status === "All" ? "tab-active" : ""}`} onClick={() => setStatus("All")}>All</a>
+      {/* Status Filter */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          className={`btn btn-sm ${status === 'All' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setStatus('All')}
+        >All</button>
         {STATUSES.map(s => (
-          <a role="tab" key={s} className={`tab ${status === s ? "tab-active" : ""}`} onClick={() => setStatus(s)}>{s}</a>
+          <button
+            key={s}
+            className={`btn btn-sm ${status === s ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setStatus(s)}
+          >{s}</button>
         ))}
       </div>
 
@@ -651,22 +662,22 @@ function ProjectsContent() {
       </div>
       
       {filtered.length === 0 && (
-        <div className="alert alert-info">
+        <div className="alert bg-[#EFF6FF] border border-[#2563EB]/20 text-[#1E293B]">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>No projects match your filters.</span>
+          <span className="text-sm">No projects match your filters.</span>
         </div>
       )}
 
       {/* New Project Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-[#E2E8F0] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit}>
               <div className="card-body">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="card-title text-2xl">
+                  <h2 className="text-2xl font-bold text-[#1E293B]">
                     {editingProject ? "Edit Project" : "Create New Project"}
                   </h2>
                   <button
@@ -694,11 +705,11 @@ function ProjectsContent() {
                 <div className="space-y-4">
                   {/* Project Name */}
                   <div className="form-control">
-                    <label className="label">Project Name *</label>
+                    <label className="label text-sm font-medium text-[#1E293B]">Project Name *</label>
                     <input
                       type="text"
                       name="name"
-                      className={`input ${errors.name ? 'input-error' : ''}`}
+                      className={`input input-bordered ${errors.name ? 'input-error' : ''}`}
                       placeholder="Enter project name"
                       value={formData.name}
                       onChange={handleInputChange}
@@ -709,10 +720,10 @@ function ProjectsContent() {
 
                   {/* Description */}
                   <div className="form-control">
-                    <label className="label">Description *</label>
+                    <label className="label text-sm font-medium text-[#1E293B]">Description *</label>
                     <textarea
                       name="description"
-                      className={`input min-h-[100px] py-2 ${errors.description ? 'input-error' : ''}`}
+                      className={`textarea textarea-bordered min-h-[120px] ${errors.description ? 'textarea-error' : ''}`}
                       placeholder="Enter project description"
                       value={formData.description}
                       onChange={handleInputChange}
@@ -724,10 +735,10 @@ function ProjectsContent() {
                   {/* Manager and Status Row */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="form-control">
-                      <label className="label">Project Manager *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Project Manager *</label>
                       <select
                         name="manager"
-                        className="input"
+                        className="select select-bordered"
                         value={formData.manager}
                         onChange={handleInputChange}
                         required
@@ -741,10 +752,10 @@ function ProjectsContent() {
                     </div>
 
                     <div className="form-control">
-                      <label className="label">Status *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Status *</label>
                       <select
                         name="status"
-                        className="input"
+                        className="select select-bordered"
                         value={formData.status}
                         onChange={handleInputChange}
                         required
@@ -761,11 +772,11 @@ function ProjectsContent() {
                   {/* Deadline and Team Size Row */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="form-control">
-                      <label className="label">Deadline *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Deadline *</label>
                       <input
                         type="date"
                         name="deadline"
-                        className={`input ${errors.deadline ? 'input-error' : ''}`}
+                        className={`input input-bordered ${errors.deadline ? 'input-error' : ''}`}
                         value={formData.deadline}
                         onChange={handleInputChange}
                         required
@@ -774,11 +785,11 @@ function ProjectsContent() {
                     </div>
 
                     <div className="form-control">
-                      <label className="label">Team Size</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Team Size</label>
                       <input
                         type="number"
                         name="teamSize"
-                        className={`input ${errors.teamSize ? 'input-error' : ''}`}
+                        className={`input input-bordered ${errors.teamSize ? 'input-error' : ''}`}
                         placeholder="Number of team members"
                         value={formData.teamSize}
                         onChange={handleInputChange}
@@ -792,26 +803,26 @@ function ProjectsContent() {
                   {/* Progress (only show when editing) */}
                   {editingProject && (
                     <div className="form-control">
-                      <label className="label">Progress (%)</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Progress (%)</label>
                       <input
                         type="number"
                         name="progress"
-                        className="input"
+                        className="input input-bordered"
                         placeholder="Project progress"
                         value={formData.progress}
                         onChange={handleInputChange}
                         min="0"
                         max="100"
                       />
-                      <div className="progress progress-primary mt-2">
-                        <div className="progress-bar" style={{ width: `${formData.progress}%` }}></div>
+                      <div className="h-2 w-full rounded-full bg-[#E2E8F0] overflow-hidden mt-2">
+                        <div className="h-full bg-[#2563EB] transition-all" style={{ width: `${formData.progress}%` }} />
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Actions */}
-                <div className="card-actions justify-end mt-6 pt-4 border-t border-base-300">
+                <div className="card-actions justify-end mt-6 pt-4 border-t border-[#E2E8F0]">
                   <button
                     type="button"
                     onClick={handleCloseModal}
@@ -831,8 +842,8 @@ function ProjectsContent() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-[#E2E8F0] max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
             <p className="mb-6">Are you sure you want to delete this project? This action cannot be undone.</p>
             <div className="flex justify-end gap-2">
@@ -849,8 +860,8 @@ function ProjectsContent() {
 
       {/* Unsaved Changes Warning Modal */}
       {showUnsavedWarning && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-[#E2E8F0] max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Unsaved Changes</h3>
             <p className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</p>
             <div className="flex justify-end gap-2">

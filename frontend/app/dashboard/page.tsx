@@ -3,6 +3,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { projectAPI, taskAPI, type Project, type Task } from "@/lib/api";
+import {
+  Briefcase,
+  CheckCircle,
+  ClipboardList,
+  Users,
+  AlertTriangle,
+  Plus,
+} from "lucide-react";
 
 const PRIORITY_ORDER: Record<Task["priority"], number> = {
   High: 0,
@@ -117,32 +125,19 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="loading loading-spinner loading-lg" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+        <div className="loading loading-spinner loading-lg text-[#2563EB]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="space-y-6">
-        <div className="alert alert-error">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+      <div className="p-4 md:p-8">
+        <div className="alert alert-error bg-red-100 border border-red-400 text-red-700">
+          <AlertTriangle className="h-6 w-6 text-red-700" />
           <span>{error}</span>
-          <button className="btn btn-sm" onClick={loadData}>
+          <button className="btn btn-sm bg-red-500 text-white hover:bg-red-600" onClick={loadData}>
             Retry
           </button>
         </div>
@@ -151,15 +146,11 @@ function DashboardContent() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="bg-[#F8FAFC] p-4 md:p-8 space-y-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Dashboard</h1>
-          <p className="text-base-content/70">Centralized view of project health and team workload.</p>
-        </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/projects" className="btn btn-primary">
-            View Projects
+          <Link href="/projects/new" className="btn btn-primary gap-2">
+            <Plus size={16} /> New Project
           </Link>
           <Link href="/tasks" className="btn btn-outline">
             Review Tasks
@@ -170,62 +161,57 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
-            <h3 className="text-xs uppercase tracking-wide text-base-content/60">Total Projects</h3>
-            <p className="text-3xl font-semibold">{dashboard.totalProjects}</p>
-            <p className="text-sm text-base-content/70">{dashboard.inProgressProjects} active · {dashboard.completedProjects} completed</p>
-          </div>
-        </div>
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
-            <h3 className="text-xs uppercase tracking-wide text-base-content/60">Open Tasks</h3>
-            <p className="text-3xl font-semibold">{dashboard.totalTasks - dashboard.completedTasks}</p>
-            <p className="text-sm text-base-content/70">{dashboard.highPriorityOpen} high priority awaiting action</p>
-          </div>
-        </div>
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs uppercase tracking-wide text-base-content/60">Task Completion</h3>
-              <span className="text-sm font-semibold">{dashboard.taskCompletionRate}%</span>
-            </div>
-            <progress className="progress progress-primary mt-2" value={dashboard.taskCompletionRate} max={100} />
-            <p className="text-sm text-base-content/70">{dashboard.completedTasks} of {dashboard.totalTasks} tasks completed</p>
-          </div>
-        </div>
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
-            <h3 className="text-xs uppercase tracking-wide text-base-content/60">Team Load</h3>
-            <p className="text-3xl font-semibold">{dashboard.averageTeamSize}</p>
-            <p className="text-sm text-base-content/70">Average team members per project</p>
-          </div>
-        </div>
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          icon={Briefcase}
+          title="Total Projects"
+          value={dashboard.totalProjects}
+          description={`${dashboard.inProgressProjects} active · ${dashboard.completedProjects} completed`}
+        />
+        <StatCard
+          icon={ClipboardList}
+          title="Open Tasks"
+          value={dashboard.totalTasks - dashboard.completedTasks}
+          description={`${dashboard.highPriorityOpen} high priority`}
+        />
+        <StatCard
+          icon={CheckCircle}
+          title="Task Completion"
+          value={`${dashboard.taskCompletionRate}%`}
+          description={`${dashboard.completedTasks} of ${dashboard.totalTasks} tasks done`}
+        >
+          <progress className="progress progress-primary mt-2" value={dashboard.taskCompletionRate} max={100} />
+        </StatCard>
+        <StatCard
+          icon={Users}
+          title="Avg. Team Size"
+          value={dashboard.averageTeamSize}
+          description="members per project"
+        />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="card bg-base-100 shadow lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="card bg-white shadow border border-[#E2E8F0] lg:col-span-2">
           <div className="card-body gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="card-title">Upcoming Deadlines</h2>
-              <Link href="/projects" className="link link-primary text-sm">
+              <h2 className="text-xl font-bold text-[#1E293B]">Upcoming Deadlines</h2>
+              <Link href="/projects" className="text-sm font-semibold text-[#2563EB] hover:underline">
                 View all
               </Link>
             </div>
             {dashboard.upcomingProjects.length === 0 ? (
-              <p className="text-sm text-base-content/70">No deadlines in the next two weeks.</p>
+              <p className="text-sm text-[#64748B]">No deadlines in the next two weeks.</p>
             ) : (
               <div className="space-y-3">
                 {dashboard.upcomingProjects.map((project) => (
-                  <div key={project.id} className="flex items-center justify-between rounded-lg border border-base-200 p-3">
+                  <div key={project.id} className="flex items-center justify-between rounded-lg border border-[#E2E8F0] p-3 hover:bg-[#F8FAFC]">
                     <div>
-                      <p className="font-medium">{project.name}</p>
-                      <p className="text-sm text-base-content/70">Managed by {project.manager}</p>
+                      <p className="font-semibold text-[#1E293B]">{project.name}</p>
+                      <p className="text-sm text-[#64748B]">Managed by {project.manager}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-primary">Due {formatDate(project.deadline)}</p>
-                      <p className="text-xs text-base-content/60">Status: {project.status}</p>
+                      <p className="text-sm font-semibold text-[#2563EB]">Due {formatDate(project.deadline)}</p>
+                      <p className="text-xs text-[#64748B]">Status: {project.status}</p>
                     </div>
                   </div>
                 ))}
@@ -234,39 +220,39 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="card bg-base-100 shadow">
+        <div className="card bg-white shadow border border-[#E2E8F0]">
           <div className="card-body gap-4">
-            <h2 className="card-title">Task Status</h2>
+            <h2 className="text-xl font-bold text-[#1E293B]">Task Status</h2>
             {dashboard.totalTasks === 0 ? (
-              <p className="text-sm text-base-content/70">No tasks available.</p>
+              <p className="text-sm text-[#64748B]">No tasks available.</p>
             ) : (
               <>
-                <div className="flex h-2 overflow-hidden rounded-full bg-base-300">
+                <div className="flex h-2 overflow-hidden rounded-full bg-[#E2E8F0]">
                   <div
-                    className="bg-info"
+                    className="bg-[#3B82F6]"
                     style={{ width: `${(dashboard.stateCounts.new / dashboard.totalTasks) * 100 || 0}%` }}
                   />
                   <div
-                    className="bg-warning"
+                    className="bg-[#F59E0B]"
                     style={{ width: `${(dashboard.stateCounts.inProgress / dashboard.totalTasks) * 100 || 0}%` }}
                   />
                   <div
-                    className="bg-success"
+                    className="bg-[#10B981]"
                     style={{ width: `${(dashboard.stateCounts.done / dashboard.totalTasks) * 100 || 0}%` }}
                   />
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
-                    <span className="text-info">New</span>
-                    <span>{dashboard.stateCounts.new}</span>
+                    <span className="flex items-center gap-2 text-[#3B82F6]"><div className="w-2 h-2 rounded-full bg-current" />New</span>
+                    <span className="font-semibold">{dashboard.stateCounts.new}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-warning">In Progress</span>
-                    <span>{dashboard.stateCounts.inProgress}</span>
+                    <span className="flex items-center gap-2 text-[#F59E0B]"><div className="w-2 h-2 rounded-full bg-current" />In Progress</span>
+                    <span className="font-semibold">{dashboard.stateCounts.inProgress}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-success">Done</span>
-                    <span>{dashboard.stateCounts.done}</span>
+                    <span className="flex items-center gap-2 text-[#10B981]"><div className="w-2 h-2 rounded-full bg-current" />Done</span>
+                    <span className="font-semibold">{dashboard.stateCounts.done}</span>
                   </div>
                 </div>
               </>
@@ -275,31 +261,33 @@ function DashboardContent() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="card bg-base-100 shadow">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card bg-white shadow border border-[#E2E8F0]">
           <div className="card-body gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="card-title">Focus Tasks</h2>
-              <Link href="/tasks" className="link link-primary text-sm">
+              <h2 className="text-xl font-bold text-[#1E293B]">Focus Tasks</h2>
+              <Link href="/tasks" className="text-sm font-semibold text-[#2563EB] hover:underline">
                 Manage tasks
               </Link>
             </div>
             {dashboard.focusTasks.length === 0 ? (
-              <p className="text-sm text-base-content/70">All tasks are complete. Great job!</p>
+              <p className="text-sm text-[#64748B]">All tasks are complete. Great job!</p>
             ) : (
               <div className="space-y-3">
                 {dashboard.focusTasks.map((task) => (
-                  <div key={task.id} className="flex items-start justify-between rounded-lg border border-base-200 p-3">
+                  <div key={task.id} className="flex items-start justify-between rounded-lg border border-[#E2E8F0] p-3 hover:bg-[#F8FAFC]">
                     <div>
-                      <p className="font-medium">{task.title}</p>
-                      <p className="text-sm text-base-content/70">Project: {task.project}</p>
-                      <p className="text-xs text-base-content/60">Assignee: {task.assignee}</p>
+                      <p className="font-semibold text-[#1E293B]">{task.title}</p>
+                      <p className="text-sm text-[#64748B]">Project: {task.project}</p>
+                      <p className="text-xs text-[#64748B]">Assignee: {task.assignee}</p>
                     </div>
                     <div className="text-right">
-                      <span className={`badge ${task.priority === "High" ? "badge-error" : task.priority === "Medium" ? "badge-warning" : "badge-ghost"}`}>
+                      <span className={`badge ${
+                        task.priority === "High" ? "badge-error" : task.priority === "Medium" ? "badge-warning" : "badge-ghost"
+                      } text-xs`}>
                         {task.priority}
                       </span>
-                      <p className="mt-2 text-xs text-base-content/60">Due {formatDate(task.due)}</p>
+                      <p className="mt-2 text-xs text-[#64748B]">Due {formatDate(task.due)}</p>
                     </div>
                   </div>
                 ))}
@@ -308,22 +296,22 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="card bg-base-100 shadow">
+        <div className="card bg-white shadow border border-[#E2E8F0]">
           <div className="card-body gap-4">
-            <h2 className="card-title">Overdue Tasks</h2>
+            <h2 className="text-xl font-bold text-[#1E293B]">Overdue Tasks</h2>
             {dashboard.overdueTasks.length === 0 ? (
-              <p className="text-sm text-base-content/70">No overdue work items. Keep it up!</p>
+              <p className="text-sm text-[#64748B]">No overdue work items. Keep it up!</p>
             ) : (
               <div className="space-y-3">
                 {dashboard.overdueTasks.map((task) => (
-                  <div key={task.id} className="flex items-start justify-between rounded-lg border border-error/40 bg-error/10 p-3">
+                  <div key={task.id} className="flex items-start justify-between rounded-lg border border-red-200 bg-red-50 p-3">
                     <div>
-                      <p className="font-medium text-error">{task.title}</p>
-                      <p className="text-sm text-base-content/80">Project: {task.project}</p>
+                      <p className="font-semibold text-red-600">{task.title}</p>
+                      <p className="text-sm text-red-500">Project: {task.project}</p>
                     </div>
                     <div className="text-right text-sm">
-                      <p className="font-semibold text-error">Due {formatDate(task.due)}</p>
-                      <p className="text-xs text-base-content/60">Assignee: {task.assignee}</p>
+                      <p className="font-semibold text-red-600">Due {formatDate(task.due)}</p>
+                      <p className="text-xs text-red-500">Assignee: {task.assignee}</p>
                     </div>
                   </div>
                 ))}
@@ -336,6 +324,29 @@ function DashboardContent() {
   );
 }
 
+const StatCard = ({ icon: Icon, title, value, description, children }: {
+  icon: React.ElementType,
+  title: string,
+  value: string | number,
+  description: string,
+  children?: React.ReactNode
+}) => (
+  <div className="card bg-white shadow border border-[#E2E8F0]">
+    <div className="card-body">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-lg bg-[#E0E7FF] flex items-center justify-center">
+          <Icon className="w-6 h-6 text-[#2563EB]" />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-[#64748B] uppercase">{title}</h3>
+          <p className="text-3xl font-bold text-[#1E293B]">{value}</p>
+        </div>
+      </div>
+      {children || <p className="text-sm text-[#64748B] mt-2">{description}</p>}
+      {!children && description && <p className="text-sm text-[#64748B] mt-2">{description}</p>}
+    </div>
+  </div>
+);
 
 export default function DashboardPage() {
   return (

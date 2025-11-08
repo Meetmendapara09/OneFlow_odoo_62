@@ -174,12 +174,12 @@ export default function TaskDetailPage() {
 
   if (!task) {
     return (
-      <div className="space-y-6">
-        <div className="alert alert-error">
+      <div className="space-y-6 bg-[#F8FAFC] p-2 md:p-0">
+        <div className="alert bg-[#FEF2F2] border border-[#EF4444]/30 text-[#7F1D1D]">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>Task not found</span>
+          <span className="text-sm">Task not found</span>
         </div>
         <Link href="/tasks" className="btn btn-primary">
           Back to Tasks
@@ -212,7 +212,7 @@ export default function TaskDetailPage() {
   const hoursProgress = task.estimatedHours ? (task.actualHours / task.estimatedHours) * 100 : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-[#F8FAFC] p-2 md:p-0">
       {/* Header */}
       <div className="flex items-start gap-4">
         <button onClick={() => router.back()} className="btn btn-ghost btn-sm mt-1">
@@ -222,12 +222,21 @@ export default function TaskDetailPage() {
           Back
         </button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold mb-2">{task.title}</h1>
+          <h1 className="text-3xl font-bold mb-2 text-[#1E293B]">{task.title}</h1>
           <div className="flex flex-wrap gap-2">
-            <span className={`badge ${getStateBadgeClass()} badge-lg`}>{task.state}</span>
-            <span className={`badge ${getPriorityBadgeClass()} badge-lg`}>{task.priority}</span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
+              task.state === 'Done' ? 'bg-green-100 text-green-700 border-green-200' :
+              task.state === 'In Progress' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+              task.state === 'Blocked' ? 'bg-red-100 text-red-700 border-red-200' :
+              'bg-slate-100 text-slate-700 border-slate-200'
+            }`}>{task.state}</span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
+              task.priority === 'High' ? 'bg-red-100 text-red-700 border-red-200' :
+              task.priority === 'Medium' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+              'bg-slate-100 text-slate-700 border-slate-200'
+            }`}>{task.priority}</span>
             {task.tags?.map((tag, idx) => (
-              <span key={idx} className="badge badge-neutral badge-lg">{tag}</span>
+              <span key={idx} className="px-2 py-1 rounded-full text-xs font-medium border bg-slate-100 text-slate-700 border-slate-200">{tag}</span>
             ))}
           </div>
         </div>
@@ -235,45 +244,47 @@ export default function TaskDetailPage() {
 
       {/* Blocked Alert */}
       {task.state === "Blocked" && task.blockedReason && (
-        <div className="alert alert-warning">
+        <div className="alert bg-[#FFFBEB] border border-[#F59E0B]/30 text-[#7C2D12]">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <span><strong>Blocked:</strong> {task.blockedReason}</span>
+          <span className="text-sm"><strong>Blocked:</strong> {task.blockedReason}</span>
         </div>
       )}
 
-      {/* Stats Row */}
-      <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-        <div className="stat">
-          <div className="stat-title">Progress</div>
-          <div className="stat-value text-primary">
-            {task.subtaskProgress ? Math.round((task.subtaskProgress.completed / task.subtaskProgress.total) * 100) : 0}%
-          </div>
-          <div className="stat-desc">
-            {task.subtaskProgress?.completed || 0} of {task.subtaskProgress?.total || 0} subtasks
+      {/* Metrics Row */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="card-body p-4">
+            <h3 className="text-xs font-semibold tracking-wide uppercase text-[#64748B]">Progress</h3>
+            <p className="text-3xl font-bold mt-1 text-[#2563EB]">
+              {task.subtaskProgress ? Math.round((task.subtaskProgress.completed / task.subtaskProgress.total) * 100) : 0}%
+            </p>
+            <p className="text-sm text-[#64748B]">{task.subtaskProgress?.completed || 0} of {task.subtaskProgress?.total || 0} subtasks</p>
           </div>
         </div>
-        
-        <div className="stat">
-          <div className="stat-title">Time Tracking</div>
-          <div className="stat-value metric-hours">{task.actualHours}h</div>
-          <div className="stat-desc">of {task.estimatedHours}h estimated ({hoursProgress.toFixed(0)}%)</div>
-        </div>
-        
-        <div className="stat">
-          <div className="stat-title">Due Date</div>
-          <div className={`stat-value text-sm ${isOverdue ? "text-error" : ""}`}>
-            {new Date(task.due).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="card-body p-4">
+            <h3 className="text-xs font-semibold tracking-wide uppercase text-[#64748B]">Time Tracking</h3>
+            <p className="text-3xl font-bold mt-1 text-[#1E293B]">{task.actualHours}h</p>
+            <p className="text-sm text-[#64748B]">of {task.estimatedHours}h estimated ({hoursProgress.toFixed(0)}%)</p>
           </div>
-          <div className="stat-desc">
-            {isOverdue ? (
-              <span className="text-error">{Math.abs(daysLeft)} days overdue</span>
-            ) : task.state === "Done" ? (
-              <span className="text-success">Completed</span>
-            ) : (
-              <span>{daysLeft} days remaining</span>
-            )}
+        </div>
+        <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="card-body p-4">
+            <h3 className="text-xs font-semibold tracking-wide uppercase text-[#64748B]">Due Date</h3>
+            <p className={`text-3xl font-bold mt-1 ${isOverdue ? 'text-[#DC2626]' : 'text-[#1E293B]' }`}>
+              {new Date(task.due).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            </p>
+            <p className="text-sm text-[#64748B]">
+              {isOverdue ? (
+                <span className="text-[#DC2626]">{Math.abs(daysLeft)} days overdue</span>
+              ) : task.state === "Done" ? (
+                <span className="text-[#16A34A]">Completed</span>
+              ) : (
+                <span>{daysLeft} days remaining</span>
+              )}
+            </p>
           </div>
         </div>
       </div>
@@ -283,19 +294,19 @@ export default function TaskDetailPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          <div className="card card-primary">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
-              <h2 className="card-title">Description</h2>
-              <p className="text-muted">{task.description}</p>
+              <h2 className="text-lg font-semibold text-[#1E293B]">Description</h2>
+              <p className="text-[#64748B]">{task.description}</p>
             </div>
           </div>
 
           {/* Subtasks */}
-          <div className="card">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="card-title">Subtasks</h2>
-                <span className="text-muted text-sm">
+                <h2 className="text-lg font-semibold text-[#1E293B]">Subtasks</h2>
+                <span className="text-[#64748B] text-sm">
                   {task.subtaskProgress?.completed || 0} / {task.subtaskProgress?.total || 0} completed
                 </span>
               </div>
@@ -303,18 +314,18 @@ export default function TaskDetailPage() {
               {subtasks.length > 0 ? (
                 <div className="space-y-2">
                   {subtasks.map(subtask => (
-                    <div key={subtask.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-base-200">
+                    <div key={subtask.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[#F1F5F9]">
                       <input
                         type="checkbox"
                         checked={subtask.completed}
                         readOnly
-                        className="w-5 h-5 rounded border-border accent-primary"
+                        className="w-5 h-5 rounded border-[#E2E8F0] accent-[#2563EB]"
                       />
-                      <span className={`flex-1 ${subtask.completed ? "line-through text-muted" : ""}`}>
+                      <span className={`flex-1 ${subtask.completed ? "line-through text-[#94A3B8]" : "text-[#1E293B]"}`}>
                         {subtask.title}
                       </span>
                       {subtask.completed && (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#16A34A]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -322,29 +333,29 @@ export default function TaskDetailPage() {
                   ))}
                 </div>
               ) : (
-                <div className="alert alert-info">
+                <div className="alert bg-[#EFF6FF] border border-[#2563EB]/20 text-[#1E293B]">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>No subtasks defined for this task.</span>
+                  <span className="text-sm">No subtasks defined for this task.</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* Activity Timeline */}
-          <div className="card card-success">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4">Activity Timeline</h2>
+              <h2 className="text-lg font-semibold text-[#1E293B] mb-4">Activity Timeline</h2>
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <div className="flex flex-col items-center">
-                    <div className="w-3 h-3 rounded-full bg-success"></div>
-                    <div className="w-0.5 h-full bg-success"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#16A34A]"></div>
+                    <div className="w-0.5 h-full bg-[#16A34A]"></div>
                   </div>
                   <div className="pb-8">
-                    <p className="font-semibold">Task Created</p>
-                    <p className="text-sm text-muted">
+                    <p className="font-semibold text-[#1E293B]">Task Created</p>
+                    <p className="text-sm text-[#64748B]">
                       {new Date(task.createdDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                     </p>
                   </div>
@@ -353,12 +364,12 @@ export default function TaskDetailPage() {
                 {task.actualHours > 0 && (
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className="w-3 h-3 rounded-full bg-primary"></div>
-                      <div className="w-0.5 h-full bg-primary"></div>
+                      <div className="w-3 h-3 rounded-full bg-[#2563EB]"></div>
+                      <div className="w-0.5 h-full bg-[#2563EB]"></div>
                     </div>
                     <div className="pb-8">
-                      <p className="font-semibold">Work Started</p>
-                      <p className="text-sm text-muted">{task.actualHours} hours logged so far</p>
+                      <p className="font-semibold text-[#1E293B]">Work Started</p>
+                      <p className="text-sm text-[#64748B]">{task.actualHours} hours logged so far</p>
                     </div>
                   </div>
                 )}
@@ -366,11 +377,11 @@ export default function TaskDetailPage() {
                 {task.state === "Done" && task.completedDate && (
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className="w-3 h-3 rounded-full bg-success"></div>
+                      <div className="w-3 h-3 rounded-full bg-[#16A34A]"></div>
                     </div>
                     <div>
-                      <p className="font-semibold text-success">Task Completed</p>
-                      <p className="text-sm text-muted">
+                      <p className="font-semibold text-[#16A34A]">Task Completed</p>
+                      <p className="text-sm text-[#64748B]">
                         {new Date(task.completedDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
@@ -380,11 +391,11 @@ export default function TaskDetailPage() {
                 {task.state !== "Done" && (
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className="w-3 h-3 rounded-full bg-base-300"></div>
+                      <div className="w-3 h-3 rounded-full bg-[#E2E8F0]"></div>
                     </div>
                     <div>
-                      <p className="font-semibold text-muted">Target Completion</p>
-                      <p className="text-sm text-muted">
+                      <p className="font-semibold text-[#64748B]">Target Completion</p>
+                      <p className="text-sm text-[#64748B]">
                         {new Date(task.due).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                       </p>
                     </div>
@@ -398,35 +409,35 @@ export default function TaskDetailPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Task Details */}
-          <div className="card">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4">Task Details</h2>
+              <h2 className="text-lg font-semibold text-[#1E293B] mb-4">Task Details</h2>
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-muted">Project</p>
+                  <p className="text-sm text-[#64748B]">Project</p>
                   <Link href={`/projects/${task.projectId}`} className="link link-primary font-medium">
                     {task.project}
                   </Link>
                 </div>
                 <div>
-                  <p className="text-sm text-muted">Assignee</p>
+                  <p className="text-sm text-[#64748B]">Assignee</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-semibold text-sm">
                       {task.assignee[0]}
                     </div>
-                    <p className="font-medium">{task.assignee}</p>
+                    <p className="font-medium text-[#1E293B]">{task.assignee}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-muted">Created</p>
-                  <p className="font-medium">
+                  <p className="text-sm text-[#64748B]">Created</p>
+                  <p className="font-medium text-[#1E293B]">
                     {new Date(task.createdDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </p>
                 </div>
                 {task.completedDate && (
                   <div>
-                    <p className="text-sm text-muted">Completed</p>
-                    <p className="font-medium text-success">
+                    <p className="text-sm text-[#64748B]">Completed</p>
+                    <p className="font-medium text-[#16A34A]">
                       {new Date(task.completedDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </p>
                   </div>
@@ -436,35 +447,38 @@ export default function TaskDetailPage() {
           </div>
 
           {/* Time Tracking */}
-          <div className="card card-warning">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4">Time Tracking</h2>
+              <h2 className="text-lg font-semibold text-[#1E293B] mb-4">Time Tracking</h2>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-muted">Estimated:</span>
-                  <span className="font-semibold">{task.estimatedHours}h</span>
+                  <span className="text-[#64748B]">Estimated:</span>
+                  <span className="font-semibold text-[#1E293B]">{task.estimatedHours}h</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Actual:</span>
-                  <span className="font-semibold metric-hours">{task.actualHours}h</span>
+                  <span className="text-[#64748B]">Actual:</span>
+                  <span className="font-semibold text-[#1E293B]">{task.actualHours}h</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted">Remaining:</span>
-                  <span className={`font-semibold ${task.actualHours > task.estimatedHours ? "text-error" : ""}`}>
+                  <span className="text-[#64748B]">Remaining:</span>
+                  <span className={`font-semibold ${task.actualHours > task.estimatedHours ? "text-[#DC2626]" : "text-[#1E293B]"}`}>
                     {Math.max(0, task.estimatedHours - task.actualHours)}h
                   </span>
                 </div>
-                <div className="progress progress-primary">
-                  <div className="progress-bar" style={{ width: `${Math.min(100, hoursProgress)}%` }}></div>
+                <div className="h-2 w-full bg-[#E2E8F0] rounded-full overflow-hidden mt-2">
+                  <div
+                    className={`h-full rounded-full ${hoursProgress > 100 ? 'bg-[#DC2626]' : 'bg-[#2563EB]'}`}
+                    style={{ width: `${Math.min(100, hoursProgress)}%` }}
+                  />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="card">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4">Actions</h2>
+              <h2 className="text-lg font-semibold text-[#1E293B] mb-4">Actions</h2>
               <div className="space-y-2">
                 <Link href={`/tasks?edit=${taskId}`} className="btn btn-primary btn-sm w-full justify-start">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

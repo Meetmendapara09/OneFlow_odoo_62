@@ -12,7 +12,7 @@ type HistoryAction = {
 };
 
 const STATES: Task["state"][] = ["New", "In Progress", "Done"];
-const PRIORITIES: Task["priority"][] = ["Low", "Medium", "High"];
+const PRIORITIES: Task["priority"][] = ["Low", "Medium", "High", "Critical"];
 
 const PROJECTS = [
   { id: "p1", name: "Student Portal Revamp" },
@@ -401,14 +401,13 @@ function TasksContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-[#F8FAFC] p-2 md:p-0">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-semibold">Tasks</h1>
         <div className="flex items-center gap-2">
           <input
             type="text"
             placeholder="Search tasks"
-            className="input"
+            className="input input-bordered w-48"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -441,50 +440,48 @@ function TasksContent() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" />
             </svg>
           </button>
-          <button className="btn btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn btn-primary gap-2" onClick={() => setShowModal(true)}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
             New Task
           </button>
         </div>
       </div>
-
-      <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-        <div className="stat">
-          <div className="stat-title">Total Tasks</div>
-          <div className="stat-value text-primary">{stats.total}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">In Progress</div>
-          <div className="stat-value text-secondary">{stats.inProgress}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Completed</div>
-          <div className="stat-value metric-profit">{stats.done}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">New</div>
-          <div className="stat-value text-warning">{stats.newTasks}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">My Tasks</div>
-          <div className="stat-value metric-hours">{stats.myTasks}</div>
-        </div>
+      {/* Metrics Cards */}
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+        {[{
+          label: 'Total Tasks', value: stats.total, color: '#2563EB'
+        }, {
+          label: 'In Progress', value: stats.inProgress, color: '#6366F1'
+        }, {
+          label: 'Completed', value: stats.done, color: '#16A34A'
+        }, {
+          label: 'New', value: stats.newTasks, color: '#F59E0B'
+        }, {
+          label: 'My Tasks', value: stats.myTasks, color: '#2563EB'
+        }].map((m, i) => (
+          <div key={i} className="card bg-white border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
+            <div className="card-body p-4">
+              <h3 className="text-xs font-semibold tracking-wide uppercase text-[#64748B]">{m.label}</h3>
+              <p className="text-3xl font-bold mt-1" style={{ color: m.color }}>{m.value}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div role="tablist" className="flex gap-2 flex-wrap">
-        <button 
-          className={`btn btn-sm ${state === "All" ? "btn-primary" : "btn-ghost"}`} 
-          onClick={() => setState("All")}
-        >
-          All
-        </button>
+      {/* State Filter */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          className={`btn btn-sm ${state === 'All' ? 'btn-primary' : 'btn-outline'}`}
+          onClick={() => setState('All')}
+        >All</button>
         {STATES.map(s => (
-          <button 
+          <button
             key={s}
-            className={`btn btn-sm ${state === s ? "btn-primary" : "btn-ghost"}`} 
+            className={`btn btn-sm ${state === s ? 'btn-primary' : 'btn-outline'}`}
             onClick={() => setState(s)}
-          >
-            {s}
-          </button>
+          >{s}</button>
         ))}
       </div>
 
@@ -495,22 +492,22 @@ function TasksContent() {
       </div>
 
       {filtered.length === 0 && (
-        <div className="alert alert-info">
+        <div className="alert bg-[#EFF6FF] border border-[#2563EB]/20 text-[#1E293B]">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>No tasks match your filters.</span>
+          <span className="text-sm">No tasks match your filters.</span>
         </div>
       )}
 
       {/* New Task Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-[#E2E8F0] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <form onSubmit={handleSubmit}>
               <div className="card-body">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="card-title text-2xl">
+                  <h2 className="text-2xl font-bold text-[#1E293B]">
                     {editingTask ? "Edit Task" : "Create New Task"}
                   </h2>
                   <button
@@ -538,11 +535,11 @@ function TasksContent() {
                 <div className="space-y-4">
                   {/* Title */}
                   <div className="form-control">
-                    <label className="label">Task Title *</label>
+                    <label className="label text-sm font-medium text-[#1E293B]">Task Title *</label>
                     <input
                       type="text"
                       name="title"
-                      className={`input ${errors.title ? 'input-error' : ''}`}
+                      className={`input input-bordered ${errors.title ? 'input-error' : ''}`}
                       placeholder="Enter task title"
                       value={formData.title}
                       onChange={handleInputChange}
@@ -553,10 +550,10 @@ function TasksContent() {
 
                   {/* Description */}
                   <div className="form-control">
-                    <label className="label">Description</label>
+                    <label className="label text-sm font-medium text-[#1E293B]">Description</label>
                     <textarea
                       name="description"
-                      className={`input min-h-[100px] py-2 ${errors.description ? 'input-error' : ''}`}
+                      className={`textarea textarea-bordered min-h-[120px] ${errors.description ? 'textarea-error' : ''}`}
                       placeholder="Enter task description"
                       value={formData.description}
                       onChange={handleInputChange}
@@ -567,10 +564,10 @@ function TasksContent() {
                   {/* Project and Assignee Row */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="form-control">
-                      <label className="label">Project *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Project *</label>
                       <select
                         name="projectId"
-                        className={`input ${errors.projectId ? 'input-error' : ''}`}
+                        className={`select select-bordered ${errors.projectId ? 'select-error' : ''}`}
                         value={formData.projectId}
                         onChange={handleInputChange}
                         required
@@ -586,10 +583,10 @@ function TasksContent() {
                     </div>
 
                     <div className="form-control">
-                      <label className="label">Assignee *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Assignee *</label>
                       <select
                         name="assignee"
-                        className="input"
+                        className="select select-bordered"
                         value={formData.assignee}
                         onChange={handleInputChange}
                         required
@@ -606,10 +603,10 @@ function TasksContent() {
                   {/* Priority, State, and Due Date Row */}
                   <div className="grid md:grid-cols-3 gap-4">
                     <div className="form-control">
-                      <label className="label">Priority *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Priority *</label>
                       <select
                         name="priority"
-                        className="input"
+                        className="select select-bordered"
                         value={formData.priority}
                         onChange={handleInputChange}
                         required
@@ -623,10 +620,10 @@ function TasksContent() {
                     </div>
 
                     <div className="form-control">
-                      <label className="label">Status *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Status *</label>
                       <select
                         name="state"
-                        className="input"
+                        className="select select-bordered"
                         value={formData.state}
                         onChange={handleInputChange}
                         required
@@ -640,11 +637,11 @@ function TasksContent() {
                     </div>
 
                     <div className="form-control">
-                      <label className="label">Due Date *</label>
+                      <label className="label text-sm font-medium text-[#1E293B]">Due Date *</label>
                       <input
                         type="date"
                         name="due"
-                        className={`input ${errors.due ? 'input-error' : ''}`}
+                        className={`input input-bordered ${errors.due ? 'input-error' : ''}`}
                         value={formData.due}
                         onChange={handleInputChange}
                         required
@@ -655,23 +652,23 @@ function TasksContent() {
 
                   {/* Tags */}
                   <div className="form-control">
-                    <label className="label">Tags (comma-separated)</label>
+                    <label className="label text-sm font-medium text-[#1E293B]">Tags (comma-separated)</label>
                     <input
                       type="text"
                       name="tags"
-                      className="input"
+                      className="input input-bordered"
                       placeholder="e.g., frontend, urgent, bug"
                       value={formData.tags}
                       onChange={handleInputChange}
                     />
-                    <span className="text-xs text-muted mt-1">
+                    <span className="text-xs text-[#64748B] mt-1">
                       Separate multiple tags with commas
                     </span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="card-actions justify-end mt-6 pt-4 border-t border-base-300">
+                <div className="card-actions justify-end mt-6 pt-4 border-t border-[#E2E8F0]">
                   <button
                     type="button"
                     onClick={handleCloseModal}
@@ -691,8 +688,8 @@ function TasksContent() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-[#E2E8F0] max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Confirm Delete</h3>
             <p className="mb-6">Are you sure you want to delete this task? This action cannot be undone.</p>
             <div className="flex justify-end gap-2">
@@ -709,8 +706,8 @@ function TasksContent() {
 
       {/* Unsaved Changes Warning Modal */}
       {showUnsavedWarning && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-[#E2E8F0] max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4">Unsaved Changes</h3>
             <p className="mb-6">You have unsaved changes. Are you sure you want to close without saving?</p>
             <div className="flex justify-end gap-2">

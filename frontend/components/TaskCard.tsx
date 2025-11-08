@@ -8,8 +8,10 @@ export interface TaskCardProps {
   projectId?: string;
   assignee: string;
   assigneeAvatar?: string;
+  managerPhoto?: string;
+  coverImage?: string;
   due: string;
-  priority: "Low" | "Medium" | "High";
+  priority: "Low" | "Medium" | "High" | "Critical";
   state: "New" | "In Progress" | "Blocked" | "Done";
   tags?: string[];
   subtaskProgress?: { completed: number; total: number };
@@ -25,6 +27,8 @@ export default function TaskCard({
   projectId,
   assignee,
   assigneeAvatar,
+  managerPhoto,
+  coverImage,
   due,
   priority,
   state,
@@ -50,12 +54,29 @@ export default function TaskCard({
 
   const getPriorityBadgeClass = () => {
     switch (priority) {
-      case "High":
+      case "Critical":
         return "badge-error";
-      case "Medium":
+      case "High":
         return "badge-warning";
+      case "Medium":
+        return "badge-info";
       case "Low":
         return "badge-neutral";
+      default:
+        return "";
+    }
+  };
+
+  const getPriorityIcon = () => {
+    switch (priority) {
+      case "Critical":
+        return "🔥";
+      case "High":
+        return "⚡";
+      case "Medium":
+        return "⚠️";
+      case "Low":
+        return "📌";
       default:
         return "";
     }
@@ -75,7 +96,19 @@ export default function TaskCard({
   };
 
   return (
-    <div className="card hover:shadow-lg transition-all">
+    <div className="card bg-white border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all overflow-hidden">
+      {/* Cover Image */}
+      {coverImage && (
+        <figure className="h-32 w-full overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={coverImage}
+            alt={title}
+            className="w-full h-full object-cover"
+          />
+        </figure>
+      )}
+      
       <div className="card-body">
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
@@ -85,21 +118,21 @@ export default function TaskCard({
               {state}
             </span>
             <span className={`badge badge-sm ${getPriorityBadgeClass()}`}>
-              {priority}
+              {getPriorityIcon()} {priority}
             </span>
           </div>
         </div>
 
         {/* Description */}
         {description && (
-          <p className="text-muted text-sm mb-3 line-clamp-2">{description}</p>
+          <p className="text-[#64748B] text-sm mb-3 line-clamp-2 leading-relaxed">{description}</p>
         )}
 
         {/* Project Link */}
         <div className="flex items-center gap-2 text-sm mb-3">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 text-muted"
+            className="h-4 w-4 text-[#64748B]"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -119,7 +152,7 @@ export default function TaskCard({
               {project}
             </Link>
           ) : (
-            <span className="text-neutral text-sm">{project}</span>
+            <span className="text-[#1E293B] text-sm">{project}</span>
           )}
         </div>
 
@@ -127,19 +160,51 @@ export default function TaskCard({
         <div className="space-y-2 mb-3">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
-              {assigneeAvatar ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={assigneeAvatar}
-                  alt={assignee}
-                  className="w-5 h-5 rounded-full"
-                />
-              ) : (
-                <div className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">
-                  {assignee[0].toUpperCase()}
+              {/* Manager Photo */}
+              {managerPhoto ? (
+                <div className="avatar-group -space-x-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <div className="avatar">
+                    <div className="w-6 h-6">
+                      <img src={managerPhoto} alt="Manager" className="rounded-full ring-2 ring-blue-500" />
+                    </div>
+                  </div>
+                  {assigneeAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <div className="avatar">
+                      <div className="w-6 h-6">
+                        <img
+                          src={assigneeAvatar}
+                          alt={assignee}
+                          className="rounded-full"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="avatar placeholder">
+                      <div className="w-6 h-6 rounded-full bg-[#2563EB] text-white">
+                        <span className="text-xs">{assignee[0].toUpperCase()}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <>
+                  {assigneeAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={assigneeAvatar}
+                      alt={assignee}
+                      className="w-5 h-5 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xs font-semibold">
+                      {assignee[0].toUpperCase()}
+                    </div>
+                  )}
+                </>
               )}
-              <span className="text-neutral">{assignee}</span>
+              <span className="text-[#1E293B] text-xs">{assignee}</span>
             </div>
             <div
               className={`flex items-center gap-1 ${getDueTextClass()} font-medium`}
@@ -171,20 +236,16 @@ export default function TaskCard({
           {subtaskProgress && subtaskProgress.total > 0 && (
             <div>
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-muted">Subtasks</span>
-                <span className="text-neutral font-medium">
+                <span className="text-[#64748B]">Subtasks</span>
+                <span className="text-[#1E293B] font-medium">
                   {subtaskProgress.completed}/{subtaskProgress.total}
                 </span>
               </div>
-              <div className="progress progress-primary h-1.5">
+              <div className="h-1.5 w-full rounded-full bg-[#E2E8F0] overflow-hidden">
                 <div
-                  className="progress-bar"
-                  style={{
-                    width: `${
-                      (subtaskProgress.completed / subtaskProgress.total) * 100
-                    }%`,
-                  }}
-                ></div>
+                  className="h-full bg-[#2563EB]"
+                  style={{ width: `${(subtaskProgress.completed / subtaskProgress.total) * 100}%` }}
+                />
               </div>
             </div>
           )}
@@ -202,7 +263,7 @@ export default function TaskCard({
         )}
 
         {/* Actions */}
-        <div className="card-actions justify-end">
+  <div className="card-actions justify-end">
           {onEdit && (
             <button 
               className="btn btn-ghost btn-sm"

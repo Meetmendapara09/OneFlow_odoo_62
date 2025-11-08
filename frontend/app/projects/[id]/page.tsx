@@ -47,6 +47,10 @@ export default function ProjectDetailPage() {
   const router = useRouter();
   const projectId = params.id as string;
 
+  const [financials, setFinancials] = useState<any>(null);
+  const [docCounts, setDocCounts] = useState<any>(null);
+  const [loadingFinancials, setLoadingFinancials] = useState(true);
+
   const project = useMemo(() => {
     return PROJECTS.find(p => p.id === projectId);
   }, [projectId]);
@@ -104,12 +108,12 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="space-y-6">
-        <div className="alert alert-error">
+      <div className="space-y-6 bg-[#F8FAFC] p-2 md:p-0">
+        <div className="alert bg-[#FEF2F2] border border-[#EF4444]/30 text-[#7F1D1D]">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>Project not found</span>
+          <span className="text-sm">Project not found</span>
         </div>
         <Link href="/projects" className="btn btn-primary">
           Back to Projects
@@ -118,33 +122,18 @@ export default function ProjectDetailPage() {
     );
   }
 
-  const getStatusBadgeClass = () => {
-    switch (project.status) {
-      case "Completed": return "badge-success";
-      case "In Progress": return "badge-primary";
-      case "Planned": return "badge-secondary";
-      case "On Hold": return "badge-warning";
-      default: return "";
-    }
+  const statusBadgeClasses: Record<string, string> = {
+    'Completed': 'bg-green-100 text-green-700 border-green-200',
+    'In Progress': 'bg-blue-100 text-blue-700 border-blue-200',
+    'Planned': 'bg-slate-100 text-slate-700 border-slate-200',
+    'On Hold': 'bg-amber-100 text-amber-700 border-amber-200',
+    'Blocked': 'bg-red-100 text-red-700 border-red-200',
+    'New': 'bg-slate-100 text-slate-700 border-slate-200'
   };
-
-  const getStateBadgeClass = (state: string) => {
-    switch (state) {
-      case "Done": return "badge-success";
-      case "In Progress": return "badge-primary";
-      case "Blocked": return "badge-error";
-      case "New": return "badge-neutral";
-      default: return "";
-    }
-  };
-
-  const getPriorityBadgeClass = (priority: string) => {
-    switch (priority) {
-      case "High": return "badge-error";
-      case "Medium": return "badge-warning";
-      case "Low": return "badge-neutral";
-      default: return "";
-    }
+  const priorityBadgeClasses: Record<string, string> = {
+    'High': 'bg-red-100 text-red-700 border-red-200',
+    'Medium': 'bg-amber-100 text-amber-700 border-amber-200',
+    'Low': 'bg-slate-100 text-slate-700 border-slate-200'
   };
 
   const budgetUsed = project.spent && project.budget ? (project.spent / project.budget) * 100 : 0;
@@ -152,7 +141,7 @@ export default function ProjectDetailPage() {
   const isOverdue = daysLeft < 0 && project.status !== "Completed";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 bg-[#F8FAFC] p-2 md:p-0">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button onClick={() => router.back()} className="btn btn-ghost btn-sm">
@@ -161,29 +150,29 @@ export default function ProjectDetailPage() {
           </svg>
           Back
         </button>
-        <h1 className="text-3xl font-bold flex-1">{project.name}</h1>
-        <span className={`badge ${getStatusBadgeClass()} badge-lg`}>{project.status}</span>
+  <h1 className="text-3xl font-bold flex-1 text-[#1E293B]">{project.name}</h1>
+  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadgeClasses[project.status]}`}>{project.status}</span>
       </div>
 
       {/* Project Overview Card */}
-      <div className="card card-primary">
+      <div className="card bg-white border border-[#E2E8F0] shadow-sm">
         <div className="card-body">
-          <h2 className="card-title">Project Overview</h2>
-          <p className="text-muted">{project.description}</p>
+          <h2 className="text-xl font-bold text-[#1E293B] mb-2">Project Overview</h2>
+          <p className="text-sm leading-relaxed text-[#64748B]">{project.description}</p>
           
           <div className="grid md:grid-cols-2 gap-6 mt-4">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-muted">Project Manager:</span>
-                <span className="font-semibold">{project.manager}</span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#64748B]">Project Manager:</span>
+                <span className="font-semibold text-[#1E293B]">{project.manager}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted">Team Size:</span>
-                <span className="font-semibold">{project.teamSize} members</span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#64748B]">Team Size:</span>
+                <span className="font-semibold text-[#1E293B]">{project.teamSize} members</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted">Deadline:</span>
-                <span className={`font-semibold ${isOverdue ? "text-error" : ""}`}>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#64748B]">Deadline:</span>
+                <span className={`font-semibold ${isOverdue ? "text-error" : "text-[#1E293B]"}`}>
                   {new Date(project.deadline).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   {isOverdue && <span className="ml-2 text-error text-xs">(Overdue)</span>}
                   {!isOverdue && daysLeft >= 0 && <span className="ml-2 text-muted text-xs">({daysLeft} days left)</span>}
@@ -192,17 +181,17 @@ export default function ProjectDetailPage() {
             </div>
             
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-muted">Tasks:</span>
-                <span className="font-semibold">{project.tasksCompleted}/{project.totalTasks} completed</span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#64748B]">Tasks:</span>
+                <span className="font-semibold text-[#1E293B]">{project.tasksCompleted}/{project.totalTasks} completed</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted">Budget:</span>
-                <span className="font-semibold">${project.budget?.toLocaleString()}</span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#64748B]">Budget:</span>
+                <span className="font-semibold text-[#1E293B]">${project.budget?.toLocaleString()}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted">Spent:</span>
-                <span className="font-semibold metric-cost">${project.spent?.toLocaleString()}</span>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[#64748B]">Spent:</span>
+                <span className="font-semibold text-[#DC2626]">${project.spent?.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -210,44 +199,260 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="stats stats-vertical lg:stats-horizontal shadow w-full">
-        <div className="stat">
-          <div className="stat-title">Overall Progress</div>
-          <div className="stat-value text-primary">{project.progress}%</div>
-          <div className="stat-desc">
-            <div className="progress progress-primary mt-2">
-              <div className="progress-bar" style={{ width: `${project.progress}%` }}></div>
+      {/* Metrics Row */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="card-body p-4">
+            <h3 className="text-xs uppercase tracking-wide font-semibold text-[#64748B]">Overall Progress</h3>
+            <p className="text-3xl font-bold text-[#2563EB] mt-1">{project.progress}%</p>
+            <div className="h-2 w-full rounded-full bg-[#E2E8F0] overflow-hidden mt-3">
+              <div className="h-full bg-[#2563EB]" style={{ width: `${project.progress}%` }} />
             </div>
           </div>
         </div>
-        
-        <div className="stat">
-          <div className="stat-title">Budget Used</div>
-          <div className="stat-value metric-hours">{budgetUsed.toFixed(0)}%</div>
-          <div className="stat-desc">
-            <div className="progress progress-warning mt-2">
-              <div className="progress-bar" style={{ width: `${budgetUsed}%` }}></div>
+        <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="card-body p-4">
+            <h3 className="text-xs uppercase tracking-wide font-semibold text-[#64748B]">Budget Used</h3>
+            <p className="text-3xl font-bold text-[#F59E0B] mt-1">{budgetUsed.toFixed(0)}%</p>
+            <div className="h-2 w-full rounded-full bg-[#E2E8F0] overflow-hidden mt-3">
+              <div className="h-full bg-[#F59E0B]" style={{ width: `${budgetUsed}%` }} />
             </div>
           </div>
         </div>
-        
-        <div className="stat">
-          <div className="stat-title">Task Completion</div>
-          <div className="stat-value metric-profit">
-            {project.totalTasks > 0 ? Math.round((project.tasksCompleted / project.totalTasks) * 100) : 0}%
+        <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="card-body p-4">
+            <h3 className="text-xs uppercase tracking-wide font-semibold text-[#64748B]">Task Completion</h3>
+            <p className="text-3xl font-bold text-[#16A34A] mt-1">{project.totalTasks > 0 ? Math.round((project.tasksCompleted / project.totalTasks) * 100) : 0}%</p>
+            <p className="text-xs text-[#64748B] mt-2">{project.tasksCompleted} of {project.totalTasks} tasks done</p>
           </div>
-          <div className="stat-desc">{project.tasksCompleted} of {project.totalTasks} tasks done</div>
         </div>
       </div>
+
+      {/* Financial Summary Section */}
+      {!loadingFinancials && financials && (
+        <div className="space-y-6">
+          {/* Financial Overview Cards */}
+          <div className="grid gap-4 md:grid-cols-4">
+            <div className="card bg-gradient-to-br from-green-50 to-green-100 border border-green-200 shadow-sm">
+              <div className="card-body p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs uppercase tracking-wide font-semibold text-green-700">Revenue</h3>
+                    <p className="text-2xl font-bold text-green-900 mt-1">
+                      ${financials.revenue.invoiced.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-green-600 mt-1">
+                      ${financials.revenue.paid.toFixed(2)} paid
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-600 opacity-70" />
+                </div>
+              </div>
+            </div>
+
+            <div className="card bg-gradient-to-br from-red-50 to-red-100 border border-red-200 shadow-sm">
+              <div className="card-body p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs uppercase tracking-wide font-semibold text-red-700">Total Costs</h3>
+                    <p className="text-2xl font-bold text-red-900 mt-1">
+                      ${financials.costs.total.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-red-600 mt-1">
+                      Bills + Expenses + Time
+                    </p>
+                  </div>
+                  <TrendingDown className="w-8 h-8 text-red-600 opacity-70" />
+                </div>
+              </div>
+            </div>
+
+            <div className={`card bg-gradient-to-br ${
+              financials.profit.amount >= 0 
+                ? 'from-blue-50 to-blue-100 border-blue-200' 
+                : 'from-orange-50 to-orange-100 border-orange-200'
+            } shadow-sm border`}>
+              <div className="card-body p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`text-xs uppercase tracking-wide font-semibold ${
+                      financials.profit.amount >= 0 ? 'text-blue-700' : 'text-orange-700'
+                    }`}>Profit</h3>
+                    <p className={`text-2xl font-bold mt-1 ${
+                      financials.profit.amount >= 0 ? 'text-blue-900' : 'text-orange-900'
+                    }`}>
+                      ${financials.profit.amount.toFixed(2)}
+                    </p>
+                    <p className={`text-xs mt-1 ${
+                      financials.profit.amount >= 0 ? 'text-blue-600' : 'text-orange-600'
+                    }`}>
+                      {financials.profit.margin.toFixed(2)}% margin
+                    </p>
+                  </div>
+                  <DollarSign className={`w-8 h-8 opacity-70 ${
+                    financials.profit.amount >= 0 ? 'text-blue-600' : 'text-orange-600'
+                  }`} />
+                </div>
+              </div>
+            </div>
+
+            <div className="card bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 shadow-sm">
+              <div className="card-body p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs uppercase tracking-wide font-semibold text-amber-700">Outstanding</h3>
+                    <p className="text-2xl font-bold text-amber-900 mt-1">
+                      ${financials.revenue.outstanding.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-amber-600 mt-1">
+                      To be collected
+                    </p>
+                  </div>
+                  <FileText className="w-8 h-8 text-amber-600 opacity-70" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Financial Breakdown */}
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+            <div className="card-body">
+              <h2 className="text-xl font-bold text-[#1E293B] mb-4">Financial Breakdown</h2>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Revenue Details */}
+                <div>
+                  <h3 className="text-sm font-semibold text-green-700 mb-3">Revenue Streams</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#64748B]">Customer Invoices</span>
+                      <span className="font-semibold text-green-700">${financials.revenue.invoiced.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#64748B]">Paid Amount</span>
+                      <span className="font-semibold text-green-600">${financials.revenue.paid.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#64748B]">Outstanding</span>
+                      <span className="font-semibold text-amber-600">${financials.revenue.outstanding.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm pt-2 border-t">
+                      <span className="text-[#64748B]">Sales Orders (Pipeline)</span>
+                      <span className="font-semibold text-[#1E293B]">${financials.revenue.salesOrders.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cost Details */}
+                <div>
+                  <h3 className="text-sm font-semibold text-red-700 mb-3">Cost Breakdown</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#64748B]">Vendor Bills</span>
+                      <span className="font-semibold text-red-700">${financials.costs.bills.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#64748B]">Expenses</span>
+                      <span className="font-semibold text-red-600">${financials.costs.expenses.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#64748B]">Timesheet Costs</span>
+                      <span className="font-semibold text-red-600">${financials.costs.timesheets.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm pt-2 border-t">
+                      <span className="text-[#64748B] font-semibold">Total Costs</span>
+                      <span className="font-bold text-red-800">${financials.costs.total.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hours Summary */}
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-sm font-semibold text-[#1E293B] mb-3">Time Tracking</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-xs text-[#64748B]">Total Hours</p>
+                    <p className="text-xl font-bold text-[#1E293B]">{financials.hours.total.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#64748B]">Billable Hours</p>
+                    <p className="text-xl font-bold text-green-700">{financials.hours.billable.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#64748B]">Non-Billable</p>
+                    <p className="text-xl font-bold text-orange-600">{financials.hours.nonBillable.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Linked Documents Section */}
+          {docCounts && (
+            <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+              <div className="card-body">
+                <h2 className="text-xl font-bold text-[#1E293B] mb-4">Linked Financial Documents</h2>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  <Link href={`/sales-orders?project=${projectId}`} 
+                        className="flex flex-col items-center p-4 rounded-lg border border-[#E2E8F0] hover:bg-[#F1F5F9] transition">
+                    <ShoppingCart className="w-8 h-8 text-blue-600 mb-2" />
+                    <p className="text-2xl font-bold text-[#1E293B]">{docCounts.salesOrders}</p>
+                    <p className="text-xs text-[#64748B]">Sales Orders</p>
+                  </Link>
+
+                  <Link href={`/invoices?project=${projectId}`} 
+                        className="flex flex-col items-center p-4 rounded-lg border border-[#E2E8F0] hover:bg-[#F1F5F9] transition">
+                    <FileText className="w-8 h-8 text-green-600 mb-2" />
+                    <p className="text-2xl font-bold text-[#1E293B]">{docCounts.invoices}</p>
+                    <p className="text-xs text-[#64748B]">Invoices</p>
+                  </Link>
+
+                  <Link href={`/purchase-orders?project=${projectId}`} 
+                        className="flex flex-col items-center p-4 rounded-lg border border-[#E2E8F0] hover:bg-[#F1F5F9] transition">
+                    <Package className="w-8 h-8 text-purple-600 mb-2" />
+                    <p className="text-2xl font-bold text-[#1E293B]">{docCounts.purchaseOrders}</p>
+                    <p className="text-xs text-[#64748B]">Purchase Orders</p>
+                  </Link>
+
+                  <Link href={`/vendor-bills?project=${projectId}`} 
+                        className="flex flex-col items-center p-4 rounded-lg border border-[#E2E8F0] hover:bg-[#F1F5F9] transition">
+                    <Receipt className="w-8 h-8 text-red-600 mb-2" />
+                    <p className="text-2xl font-bold text-[#1E293B]">{docCounts.vendorBills}</p>
+                    <p className="text-xs text-[#64748B]">Vendor Bills</p>
+                  </Link>
+
+                  <Link href={`/expenses?project=${projectId}`} 
+                        className="flex flex-col items-center p-4 rounded-lg border border-[#E2E8F0] hover:bg-[#F1F5F9] transition">
+                    <DollarSign className="w-8 h-8 text-orange-600 mb-2" />
+                    <p className="text-2xl font-bold text-[#1E293B]">{docCounts.expenses}</p>
+                    <p className="text-xs text-[#64748B]">Expenses</p>
+                  </Link>
+
+                  <Link href={`/timesheets?project=${projectId}`} 
+                        className="flex flex-col items-center p-4 rounded-lg border border-[#E2E8F0] hover:bg-[#F1F5F9] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-indigo-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-2xl font-bold text-[#1E293B]">{docCounts.timesheets}</p>
+                    <p className="text-xs text-[#64748B]">Timesheets</p>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Two Column Layout */}
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Tasks Section */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="card">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="card-title">Project Tasks</h2>
+                <h2 className="text-lg font-semibold text-[#1E293B]">Project Tasks</h2>
                 <Link href="/tasks" className="btn btn-primary btn-sm">
                   View All Tasks
                 </Link>
@@ -255,31 +460,31 @@ export default function ProjectDetailPage() {
               
               {tasks.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-base-300">
-                        <th className="text-left py-3 px-2">Task</th>
-                        <th className="text-left py-3 px-2">Assignee</th>
-                        <th className="text-left py-3 px-2">Due Date</th>
-                        <th className="text-left py-3 px-2">Priority</th>
-                        <th className="text-left py-3 px-2">Status</th>
+                      <tr className="border-b border-[#E2E8F0] bg-[#F8FAFC]">
+                        <th className="text-left py-3 px-2 font-medium text-[#64748B]">Task</th>
+                        <th className="text-left py-3 px-2 font-medium text-[#64748B]">Assignee</th>
+                        <th className="text-left py-3 px-2 font-medium text-[#64748B]">Due Date</th>
+                        <th className="text-left py-3 px-2 font-medium text-[#64748B]">Priority</th>
+                        <th className="text-left py-3 px-2 font-medium text-[#64748B]">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {tasks.map(task => (
-                        <tr key={task.id} className="border-b border-base-300 hover:bg-base-200">
-                          <td className="py-3 px-2 font-medium">{task.title}</td>
-                          <td className="py-3 px-2">{task.assignee}</td>
-                          <td className="py-3 px-2 text-sm">
+                        <tr key={task.id} className="border-b border-[#E2E8F0] hover:bg-[#F1F5F9]">
+                          <td className="py-3 px-2 font-medium text-[#1E293B]">{task.title}</td>
+                          <td className="py-3 px-2 text-[#1E293B]">{task.assignee}</td>
+                          <td className="py-3 px-2 text-xs text-[#64748B]">
                             {new Date(task.due).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                           </td>
                           <td className="py-3 px-2">
-                            <span className={`badge badge-sm ${getPriorityBadgeClass(task.priority)}`}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${priorityBadgeClasses[task.priority]}`}>
                               {task.priority}
                             </span>
                           </td>
                           <td className="py-3 px-2">
-                            <span className={`badge badge-sm ${getStateBadgeClass(task.state)}`}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadgeClasses[task.state]}`}>
                               {task.state}
                             </span>
                           </td>
@@ -289,7 +494,7 @@ export default function ProjectDetailPage() {
                   </table>
                 </div>
               ) : (
-                <div className="alert alert-info">
+                <div className="alert bg-[#EFF6FF] border border-[#2563EB]/20 text-[#1E293B]">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -300,43 +505,43 @@ export default function ProjectDetailPage() {
           </div>
 
           {/* Timeline Section */}
-          <div className="card card-success">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4">Project Timeline</h2>
+              <h2 className="text-lg font-semibold text-[#1E293B] mb-4">Project Timeline</h2>
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <div className="flex flex-col items-center">
-                    <div className="w-3 h-3 rounded-full bg-success"></div>
-                    <div className="w-0.5 h-full bg-success"></div>
+                    <div className="w-3 h-3 rounded-full bg-[#16A34A]"></div>
+                    <div className="w-0.5 h-full bg-[#16A34A]"></div>
                   </div>
                   <div className="pb-8">
-                    <p className="font-semibold">Project Created</p>
-                    <p className="text-sm text-muted">Initial planning and setup</p>
+                    <p className="font-semibold text-[#1E293B]">Project Created</p>
+                    <p className="text-xs text-[#64748B]">Initial planning and setup</p>
                   </div>
                 </div>
                 
                 {project.progress > 0 && (
                   <div className="flex gap-4">
                     <div className="flex flex-col items-center">
-                      <div className="w-3 h-3 rounded-full bg-primary"></div>
-                      <div className="w-0.5 h-full bg-base-300"></div>
+                      <div className="w-3 h-3 rounded-full bg-[#2563EB]"></div>
+                      <div className="w-0.5 h-full bg-[#E2E8F0]"></div>
                     </div>
                     <div className="pb-8">
-                      <p className="font-semibold">Development Started</p>
-                      <p className="text-sm text-muted">Team began implementation</p>
+                      <p className="font-semibold text-[#1E293B]">Development Started</p>
+                      <p className="text-xs text-[#64748B]">Team began implementation</p>
                     </div>
                   </div>
                 )}
                 
                 <div className="flex gap-4">
                   <div className="flex flex-col items-center">
-                    <div className={`w-3 h-3 rounded-full ${project.status === "Completed" ? "bg-success" : "bg-base-300"}`}></div>
+                    <div className={`w-3 h-3 rounded-full ${project.status === "Completed" ? "bg-[#16A34A]" : "bg-[#E2E8F0]"}`}></div>
                   </div>
                   <div>
-                    <p className={`font-semibold ${project.status === "Completed" ? "" : "text-muted"}`}>
+                    <p className={`font-semibold ${project.status === "Completed" ? "text-[#1E293B]" : "text-[#64748B]"}`}>
                       Project Completion
                     </p>
-                    <p className="text-sm text-muted">
+                    <p className="text-xs text-[#64748B]">
                       {project.status === "Completed" ? "Successfully completed" : `Target: ${new Date(project.deadline).toLocaleDateString()}`}
                     </p>
                   </div>
@@ -349,18 +554,18 @@ export default function ProjectDetailPage() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Team Members */}
-          <div className="card">
+          <div className="card bg-white border border-[#E2E8F0] shadow-sm">
             <div className="card-body">
-              <h2 className="card-title mb-4">Team Members</h2>
+              <h2 className="text-lg font-semibold text-[#1E293B] mb-4">Team Members</h2>
               <div className="space-y-3">
                 {team.map((member, index) => (
                   <div key={index} className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+                    <div className="w-10 h-10 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-semibold">
                       {member[0]}
                     </div>
                     <div>
-                      <p className="font-medium">{member}</p>
-                      <p className="text-xs text-muted">
+                      <p className="font-medium text-[#1E293B]">{member}</p>
+                      <p className="text-xs text-[#64748B]">
                         {index === 0 ? "Project Manager" : "Team Member"}
                       </p>
                     </div>

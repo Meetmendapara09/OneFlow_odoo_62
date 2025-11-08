@@ -5,8 +5,11 @@ export interface Project {
   name: string;
   description: string;
   manager: string;
+  managerPhoto?: string;
   status: "Planned" | "In Progress" | "Completed" | "On Hold";
+  priority?: "Low" | "Medium" | "High" | "Critical";
   progress: number;
+  coverImage?: string;
   deadline: string;
   teamSize?: number;
   tasksCompleted?: number;
@@ -21,8 +24,10 @@ export interface Task {
   projectId: string;
   assignee: string;
   assigneeAvatar?: string;
+  managerPhoto?: string;
+  coverImage?: string;
   due: string;
-  priority: "Low" | "Medium" | "High";
+  priority: "Low" | "Medium" | "High" | "Critical";
   state: "New" | "In Progress" | "Done";
   tags: string[];
   subtaskProgress?: {

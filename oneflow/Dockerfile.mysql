@@ -1,0 +1,15 @@
+FROM mysql:8.0
+
+# Set environment variables
+ENV MYSQL_DATABASE=oneflow
+ENV MYSQL_ROOT_PASSWORD=rootpassword
+ENV MYSQL_USER=oneflow_user
+ENV MYSQL_PASSWORD=oneflow_pass
+
+# Copy the database schema file
+COPY database-complete-schema.sql /docker-entrypoint-initdb.d/
+
+# Expose MySQL port
+EXPOSE 3306
+
+# The mysql image will automatically run scripts in /docker-entrypoint-initdb.d/ on first startup

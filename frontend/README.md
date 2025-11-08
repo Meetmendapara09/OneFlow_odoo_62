@@ -286,7 +286,6 @@ const handleLogout = () => {
 - **Task Detail** (`/tasks/[id]`) - Single task view
 - **Analytics** (`/analytics`) - Charts and insights
 - **Profile** (`/profile`) - User account settings
-- **Style Guide** (`/styleguide`) - Component showcase
 
 ## 🧪 Development
 

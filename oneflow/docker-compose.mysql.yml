@@ -1,0 +1,35 @@
+services:
+  mysql:
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql
+    container_name: oneflow-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: oneflow
+      MYSQL_USER: oneflow_user
+      MYSQL_PASSWORD: oneflow_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      # Persist data
+      - mysql_data:/var/lib/mysql
+      # Custom MySQL configuration (optional)
+      - ./mysql.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    networks:
+      - oneflow-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  oneflow-network:
+    driver: bridge

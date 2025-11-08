@@ -36,6 +36,12 @@ public class Task {
     @Column(name = "assignee_avatar", length = 500)
     private String assigneeAvatar;
 
+    @Column(name = "manager_photo", length = 500)
+    private String managerPhoto;
+
+    @Column(name = "cover_image", length = 500)
+    private String coverImage;
+
     @Column(name = "due_date", length = 50)
     private String due;
 
