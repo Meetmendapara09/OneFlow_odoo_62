@@ -35,13 +35,13 @@ public class AuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateToken(authentication);
-        return ResponseEntity.ok(jwt);
+        return ResponseEntity.ok(new TokenResponse(jwt));
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Error: Username is already taken!");
+            return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
         }
 
         // Create new user's account
@@ -52,6 +52,40 @@ public class AuthController {
 
         userRepository.save(newUser);
 
-        return ResponseEntity.ok("User registered successfully!");
+        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+    }
+
+    // Helper class for JSON responses
+    static class MessageResponse {
+        private String message;
+
+        public MessageResponse(String message) {
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+    }
+
+    // Helper class for token responses
+    static class TokenResponse {
+        private String token;
+
+        public TokenResponse(String token) {
+            this.token = token;
+        }
+
+        public String getToken() {
+            return token;
+        }
+
+        public void setToken(String token) {
+            this.token = token;
+        }
     }
 }

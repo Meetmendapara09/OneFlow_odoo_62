@@ -69,11 +69,13 @@ async function fetchAPI<T>(
 
 // Auth API
 export const authAPI = {
-  signin: (credentials: {username:string, password:string}) =>
-    fetchAPI<string>('/auth/signin', {
+  signin: async (credentials: {username:string, password:string}) => {
+    const response = await fetchAPI<{token: string}>('/auth/signin', {
       method: 'POST',
       body: JSON.stringify(credentials),
-    }),
+    });
+    return response.token;
+  },
   signup: (userInfo: {username:string, email:string, password:string}) =>
     fetchAPI<{message: string}>('/auth/signup', {
       method: 'POST',

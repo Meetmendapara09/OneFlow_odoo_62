@@ -4,18 +4,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AuthCard from "@/components/AuthCard";
 import FormField from "@/components/FormField";
+
 import { authAPI } from "@/lib/api";
 
-interface Errors {
-  username?: string;
-  email?: string;
-  password?: string;
-  confirm?: string;
-}
+interface Errors { username?: string; email?: string; password?: string; confirm?: string; }
 
 export default function SignUpPage() {
   const router = useRouter();
-
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +21,6 @@ export default function SignUpPage() {
 
   function validate(): boolean {
     const next: Errors = {};
-
     if (!username) next.username = "Username is required";
     if (!email) next.email = "Email is required";
     else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) next.email = "Invalid email";
@@ -34,18 +28,15 @@ export default function SignUpPage() {
     else if (password.length < 8) next.password = "At least 8 characters";
     if (!confirm) next.confirm = "Confirm your password";
     else if (confirm !== password) next.confirm = "Passwords do not match";
-
     setErrors(next);
     return Object.keys(next).length === 0;
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
+      console.log("handleSubmit called");
     e.preventDefault();
-    console.log("✅ handleSubmit called"); // should fire now
-
     setServerError(null);
     if (!validate()) return;
-
     setSubmitting(true);
     try {
       await authAPI.signup({ username, email, password });
@@ -60,7 +51,6 @@ export default function SignUpPage() {
 
   return (
     <AuthCard title="Create account" subtitle="Join the OneFlow Portal">
-      {/* ✅ Only form in the component tree */}
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <FormField
           id="username"
@@ -72,7 +62,6 @@ export default function SignUpPage() {
           error={errors.username}
           placeholder="your_username"
         />
-
         <FormField
           id="email"
           type="email"
@@ -83,7 +72,6 @@ export default function SignUpPage() {
           error={errors.email}
           placeholder="you@example.com"
         />
-
         <FormField
           id="password"
           type="password"
@@ -94,7 +82,6 @@ export default function SignUpPage() {
           error={errors.password}
           placeholder="At least 8 characters"
         />
-
         <FormField
           id="confirm"
           type="password"
@@ -105,20 +92,15 @@ export default function SignUpPage() {
           error={errors.confirm}
           placeholder="Repeat your password"
         />
-
         {serverError && (
           <div className="alert alert-error py-2 text-sm">
             <span>{serverError}</span>
           </div>
         )}
-
-        <div className="text-xs text-center">
-          Already have an account?{" "}
-          <Link href="/signin" className="link link-primary">
-            Sign in
-          </Link>
+        <div className="text-xs">
+          Already have an account? {""}
+          <Link href="/signin" className="link link-primary">Sign in</Link>
         </div>
-
         <button
           type="submit"
           disabled={submitting}
