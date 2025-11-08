@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import ProjectCard, { ProjectCardProps } from "@/components/ProjectCard";
+import ProjectCard from "@/components/ProjectCard";
 import { projectAPI, type Project } from "@/lib/api";
 
 type HistoryAction = {

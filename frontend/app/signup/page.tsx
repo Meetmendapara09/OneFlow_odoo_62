@@ -68,16 +68,6 @@ export default function SignUpPage() {
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          error={errors.name}
-          placeholder="Jane Doe"
-        />
-        <FormField
-          id="email"
-          type="email"
-          label="Email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
           error={errors.email}
           placeholder="you@example.com"
         />

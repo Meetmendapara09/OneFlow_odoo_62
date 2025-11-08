@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
 export interface Project {
   id: string;
@@ -37,18 +37,21 @@ async function fetchAPI<T>(
   options?: RequestInit
 ): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options?.headers,
   };
+
+  if (options?.headers) {
+    Object.assign(headers, options.headers);
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers,
     ...options,
+    headers,
   });
 
   if (!response.ok) {
