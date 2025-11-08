@@ -1,6 +1,7 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { projectAPI, taskAPI, type Project, type Task } from "@/lib/api";
 
 const PRIORITY_ORDER: Record<Task["priority"], number> = {
@@ -20,7 +21,7 @@ function formatDate(input: string) {
   });
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -332,5 +333,14 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

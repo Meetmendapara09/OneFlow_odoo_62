@@ -20,6 +20,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [role, setRole] = useState("TEAM_MEMBER");
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -56,9 +57,12 @@ export default function SignUpPage() {
 
     try {
       console.log("🔄 Calling authAPI.signup...");
-      const response = await authAPI.signup({ username, email, password });
+      const response = await authAPI.signup({ username, email, password, role });
       console.log("✅ Signup API response:", response);
       console.log("🎉 Signup successful! Redirecting to signin...");
+
+      // Show success message before redirecting
+      alert("Account created successfully! Please sign in.");
       router.push("/signin");
     } catch (err) {
       console.error("❌ Signup error:", err);
@@ -121,6 +125,28 @@ export default function SignUpPage() {
           error={errors.confirm}
           placeholder="Repeat your password"
         />
+
+        <div className="form-control">
+          <label htmlFor="role" className="label">
+            <span className="label-text font-medium">Role</span>
+          </label>
+          <select
+            id="role"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="select select-bordered w-full"
+          >
+            <option value="TEAM_MEMBER">Team Member</option>
+            <option value="PROJECT_MANAGER">Project Manager</option>
+            <option value="SALES_FINANCE">Sales/Finance</option>
+            <option value="SUPERADMIN">Super Admin</option>
+          </select>
+          <label className="label">
+            <span className="label-text-alt text-base-content/60">
+              Select your role in the organization
+            </span>
+          </label>
+        </div>
 
         {serverError && (
           <div className="alert alert-error py-2 text-sm">

@@ -22,4 +22,15 @@ public class User {
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private Role role = Role.TEAM_MEMBER; // Default role
+
+    public enum Role {
+        SUPERADMIN,
+        PROJECT_MANAGER,
+        TEAM_MEMBER,
+        SALES_FINANCE
+    }
 }

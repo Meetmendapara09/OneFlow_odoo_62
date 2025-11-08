@@ -89,17 +89,19 @@ async function fetchAPI<T>(
 // Auth API
 export const authAPI = {
   signin: async (credentials: {username:string, password:string}) => {
-    const response = await fetchAPI<{token: string}>('/auth/signin', {
+    const response = await fetchAPI<{token: string, username: string, email?: string, role: string}>('/auth/signin', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
-    return response.token;
+    return response;
   },
-  signup: (userInfo: {username:string, email:string, password:string}) =>
+  signup: (userInfo: {username:string, email:string, password:string, role?: string}) =>
     fetchAPI<{message: string}>('/auth/signup', {
       method: 'POST',
       body: JSON.stringify(userInfo),
     }),
+  getCurrentUser: () =>
+    fetchAPI<{id: number, username: string, email: string, role: string}>('/auth/me'),
 };
 
 // Project API

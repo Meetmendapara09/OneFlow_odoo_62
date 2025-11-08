@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthCard from "@/components/AuthCard";
 import FormField from "@/components/FormField";
-
+import { useAuth } from "@/contexts/AuthContext";
 import { authAPI } from "@/lib/api";
 
 interface Errors { username?: string; password?: string; }
 
 export default function SignInPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Errors>({});
@@ -31,8 +32,9 @@ export default function SignInPage() {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      const token = await authAPI.signin({ username, password });
-      localStorage.setItem("token", token);
+      const response = await authAPI.signin({ username, password });
+      // Save auth data using context with role
+      login(response.token, response.username, response.role as any, response.email);
       router.push("/dashboard");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
