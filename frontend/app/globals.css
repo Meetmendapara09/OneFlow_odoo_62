@@ -1,1 +1,63 @@
 @import "tailwindcss";
+
+/* OneFlow Color Variables - from color.md */
+:root {
+  --primary: #2563EB;
+  --secondary: #0EA5E9;
+  --accent: #22C55E;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --neutral: #1E293B;
+  --base-100: #FFFFFF;
+  --base-200: #F8FAFC;
+  --base-300: #E2E8F0;
+  --text-primary: #1E293B;
+}
+
+/* Layout helper */
+.container { 
+  width: 100%; 
+  max-width: 1140px; 
+  margin-inline: auto; 
+  padding-inline: 1rem; 
+}
+
+/* Smooth theme transitions */
+* { 
+  transition-property: background-color, color, border-color, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+
+/* Custom gradient for hero sections */
+.gradient-primary {
+  background: linear-gradient(135deg, #2563EB 0%, #0EA5E9 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #2563EB 0%, #0EA5E9 50%, #22C55E 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Enhanced card shadows */
+.card {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Analytics/KPI specific colors */
+.metric-revenue { color: #16A34A; }
+.metric-cost { color: #EF4444; }
+.metric-profit { color: #0EA5E9; }
+.metric-hours { color: #6366F1; }
+
+.bg-metric-revenue { background-color: #16A34A; }
+.bg-metric-cost { background-color: #EF4444; }
+.bg-metric-profit { background-color: #0EA5E9; }
+.bg-metric-hours { background-color: #6366F1; }
