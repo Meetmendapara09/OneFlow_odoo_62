@@ -13,6 +13,8 @@ export interface TaskCardProps {
   state: "New" | "In Progress" | "Blocked" | "Done";
   tags?: string[];
   subtaskProgress?: { completed: number; total: number };
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function TaskCard({
@@ -28,6 +30,8 @@ export default function TaskCard({
   state,
   tags,
   subtaskProgress,
+  onEdit,
+  onDelete,
 }: TaskCardProps) {
   const getStateBadgeClass = () => {
     switch (state) {
@@ -199,22 +203,34 @@ export default function TaskCard({
 
         {/* Actions */}
         <div className="card-actions justify-end">
-          <button className="btn btn-ghost btn-sm">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          {onEdit && (
+            <button 
+              className="btn btn-ghost btn-sm"
+              onClick={() => onEdit(id)}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+            </button>
+          )}
+          {onDelete && (
+            <button 
+              className="btn btn-error btn-outline btn-sm"
+              onClick={() => onDelete(id)}
+            >
+              Delete
+            </button>
+          )}
           <Link href={`/tasks/${id}`} className="btn btn-primary btn-sm">
             Open
           </Link>

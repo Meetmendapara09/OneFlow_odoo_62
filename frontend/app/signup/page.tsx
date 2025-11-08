@@ -34,7 +34,6 @@ export default function SignUpPage() {
     if (!validate()) return;
     setSubmitting(true);
     await new Promise(r => setTimeout(r, 700));
-    // After mock registration, go to sign-in
     router.push("/signin");
   }
 

@@ -1,8 +1,9 @@
 "use client";
-import React, { useMemo, useState, useEffect, useRef, useCallback, Suspense } from "react";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import ProjectCard, { ProjectCardProps } from "@/components/ProjectCard";
-import { projectAPI, type Project } from "@/lib/api";
+
+type Project = ProjectCardProps;
 
 type HistoryAction = {
   type: 'create' | 'update' | 'delete';
@@ -11,16 +12,23 @@ type HistoryAction = {
   timestamp: number;
 };
 
+const INITIAL_DATA: Project[] = [
+  { id: "p1", name: "Student Portal Revamp", description: "UI modernization and performance work.", manager: "A. Patel", status: "In Progress", progress: 55, deadline: "2025-12-01", teamSize: 5, tasksCompleted: 12, totalTasks: 20 },
+  { id: "p2", name: "HRMS Integration", description: "Sync HR data with core systems.", manager: "R. Singh", status: "Planned", progress: 10, deadline: "2026-01-15", teamSize: 3, tasksCompleted: 2, totalTasks: 15 },
+  { id: "p3", name: "Finance Workflows", description: "Streamline approvals and reporting.", manager: "S. Kumar", status: "On Hold", progress: 35, deadline: "2026-03-01", teamSize: 4, tasksCompleted: 7, totalTasks: 18 },
+  { id: "p4", name: "AI Pilot", description: "Internal experimentation with ML models.", manager: "N. Shah", status: "Completed", progress: 100, deadline: "2025-10-01", teamSize: 6, tasksCompleted: 25, totalTasks: 25 },
+  { id: "p5", name: "Campus IoT Network", description: "Deploy IoT sensors across campus for smart building management.", manager: "V. Mehta", status: "In Progress", progress: 68, deadline: "2025-11-30", teamSize: 8, tasksCompleted: 17, totalTasks: 25 },
+  { id: "p6", name: "Library Management System", description: "Modernize library cataloging and borrowing system.", manager: "K. Desai", status: "Planned", progress: 5, deadline: "2026-02-01", teamSize: 4, tasksCompleted: 1, totalTasks: 22 },
+];
+
 const STATUSES: Project["status"][] = ["Planned", "In Progress", "Completed", "On Hold"];
 const MANAGERS = ["A. Patel", "R. Singh", "S. Kumar", "N. Shah", "V. Mehta", "K. Desai"];
 
-function ProjectsContent() {
+export default function ProjectsPage() {
   const searchParams = useSearchParams();
   const hasInitialized = useRef(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [projects, setProjects] = useState<Project[]>(INITIAL_DATA);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"All" | Project["status"]>("All");
   const [showModal, setShowModal] = useState(false);
@@ -50,25 +58,6 @@ function ProjectsContent() {
     deadline: "",
     teamSize: "",
   });
-
-  // Load projects from backend on mount
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        setLoading(true);
-        setApiError(null);
-        const data = await projectAPI.list();
-        setProjects(data);
-      } catch (error) {
-        console.error('Failed to load projects:', error);
-        setApiError('Failed to load projects from server');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProjects();
-  }, []);
 
   // Handle edit query parameter on mount
   useEffect(() => {
@@ -122,7 +111,6 @@ function ProjectsContent() {
       autoSaveTimerRef.current = setTimeout(() => {
         const draftKey = editingProject ? `project-draft-${editingProject.id}` : 'project-draft-new';
         localStorage.setItem(draftKey, JSON.stringify(formData));
-        
       }, 2000); // Auto-save after 2 seconds of inactivity
     }
 
@@ -253,7 +241,6 @@ function ProjectsContent() {
     }
 
     setErrors(newErrors);
-    
     return isValid;
   };
 
@@ -321,7 +308,7 @@ function ProjectsContent() {
     return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, [handleUndo, handleRedo]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate form
@@ -329,87 +316,80 @@ function ProjectsContent() {
       return;
     }
 
-    try {
-      if (editingProject) {
-        // Update existing project via API
-        const updatedProject = await projectAPI.update(editingProject.id, {
-          ...editingProject,
-          name: formData.name,
-          description: formData.description,
-          manager: formData.manager,
-          status: formData.status,
-          deadline: formData.deadline,
-          teamSize: formData.teamSize,
-          progress: formData.progress,
-        });
+    if (editingProject) {
+      // Update existing project
+      const updatedProject = {
+        ...editingProject,
+        name: formData.name,
+        description: formData.description,
+        manager: formData.manager,
+        status: formData.status,
+        deadline: formData.deadline,
+        teamSize: formData.teamSize,
+        progress: formData.progress,
+      };
 
-        setProjects(projects.map(p => 
-          p.id === editingProject.id ? updatedProject : p
-        ));
+      setProjects(projects.map(p => 
+        p.id === editingProject.id ? updatedProject : p
+      ));
 
-        // Add to history
-        addToHistory({
-          type: 'update',
-          project: updatedProject,
-          previousProject: editingProject,
-          timestamp: Date.now(),
-        });
-      } else {
-        // Create new project via API
-        const newProject = await projectAPI.create({
-          name: formData.name,
-          description: formData.description,
-          manager: formData.manager,
-          status: formData.status,
-          progress: 0,
-          deadline: formData.deadline,
-          teamSize: formData.teamSize,
-          tasksCompleted: 0,
-          totalTasks: 0,
-        });
-        
-        setProjects([...projects, newProject]);
-
-        // Add to history
-        addToHistory({
-          type: 'create',
-          project: newProject,
-          timestamp: Date.now(),
-        });
-      }
-
-      // Clear draft from localStorage
-      const draftKey = editingProject ? `project-draft-${editingProject.id}` : 'project-draft-new';
-      localStorage.removeItem(draftKey);
-
-      setShowModal(false);
-      setEditingProject(null);
-      setHasUnsavedChanges(false);
-      
-      // Reset form
-      setFormData({
-        name: "",
-        description: "",
-        manager: "A. Patel",
-        status: "Planned",
-        deadline: "",
-        teamSize: 1,
+      // Add to history
+      addToHistory({
+        type: 'update',
+        project: updatedProject,
+        previousProject: editingProject,
+        timestamp: Date.now(),
+      });
+    } else {
+      // Create new project
+      const newProject: Project = {
+        id: `p${projects.length + 1}`,
+        name: formData.name,
+        description: formData.description,
+        manager: formData.manager,
+        status: formData.status,
         progress: 0,
-      });
+        deadline: formData.deadline,
+        teamSize: formData.teamSize,
+        tasksCompleted: 0,
+        totalTasks: 0,
+      };
+      setProjects([...projects, newProject]);
 
-      // Reset errors
-      setErrors({
-        name: "",
-        description: "",
-        deadline: "",
-        teamSize: "",
+      // Add to history
+      addToHistory({
+        type: 'create',
+        project: newProject,
+        timestamp: Date.now(),
       });
-    } catch (error) {
-      console.error('Failed to save project:', error);
-      setApiError('Failed to save project. Please try again.');
-      // Show error to user - you could add a toast notification here
-      alert('Failed to save project. Please try again.');
     }
+
+    // Clear draft from localStorage
+    const draftKey = editingProject ? `project-draft-${editingProject.id}` : 'project-draft-new';
+    localStorage.removeItem(draftKey);
+
+    setShowModal(false);
+    setEditingProject(null);
+    setHasUnsavedChanges(false);
+    
+    // Reset form
+    setFormData({
+      name: "",
+      description: "",
+      manager: "A. Patel",
+      status: "Planned",
+      deadline: "",
+      teamSize: 1,
+      progress: 0,
+    });
+
+    // Reset errors
+    setErrors({
+      name: "",
+      description: "",
+      deadline: "",
+      teamSize: "",
+    });
   };
 
   const handleEdit = (projectId: string) => {
@@ -458,27 +438,18 @@ function ProjectsContent() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (projectToDelete) {
       const project = projects.find(p => p.id === projectToDelete);
       if (project) {
-        try {
-          // Delete from backend
-          await projectAPI.delete(projectToDelete);
-          
-          // Update local state
-          setProjects(projects.filter(p => p.id !== projectToDelete));
-          
-          // Add to history
-          addToHistory({
-            type: 'delete',
-            project: project,
-            timestamp: Date.now(),
-          });
-        } catch (error) {
-          console.error('Failed to delete project:', error);
-          alert('Failed to delete project. Please try again.');
-        }
+        setProjects(projects.filter(p => p.id !== projectToDelete));
+        
+        // Add to history
+        addToHistory({
+          type: 'delete',
+          project: project,
+          timestamp: Date.now(),
+        });
       }
     }
     setShowDeleteConfirm(false);
@@ -553,32 +524,6 @@ function ProjectsContent() {
       [name]: name === "teamSize" || name === "progress" ? parseInt(value) || 0 : value 
     }));
   };
-
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg"></div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (apiError) {
-    return (
-      <div className="space-y-6">
-        <div className="alert alert-error">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{apiError}</span>
-          <button className="btn btn-sm" onClick={() => window.location.reload()}>
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -865,14 +810,6 @@ function ProjectsContent() {
         </div>
       )}
     </div>
-  );
-}
-
-export default function ProjectsPage() {
-  return (
-    <Suspense fallback={<div className="p-8">Loading...</div>}>
-      <ProjectsContent />
-    </Suspense>
   );
 }
 

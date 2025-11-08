@@ -11,6 +11,8 @@ export interface ProjectCardProps {
   teamSize?: number;
   tasksCompleted?: number;
   totalTasks?: number;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function ProjectCard({
@@ -24,6 +26,8 @@ export default function ProjectCard({
   teamSize,
   tasksCompleted,
   totalTasks,
+  onEdit,
+  onDelete,
 }: ProjectCardProps) {
   const getStatusBadgeClass = () => {
     switch (status) {
@@ -164,7 +168,22 @@ export default function ProjectCard({
           <Link href={`/projects/${id}`} className="btn btn-primary btn-sm">
             View Details
           </Link>
-          <button className="btn btn-outline btn-sm">Edit</button>
+          {onEdit && (
+            <button 
+              className="btn btn-outline btn-sm" 
+              onClick={() => onEdit(id)}
+            >
+              Edit
+            </button>
+          )}
+          {onDelete && (
+            <button 
+              className="btn btn-error btn-outline btn-sm" 
+              onClick={() => onDelete(id)}
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
     </div>

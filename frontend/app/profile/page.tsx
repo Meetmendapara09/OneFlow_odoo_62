@@ -3,14 +3,14 @@ import React, { useState } from "react";
 import FormField from "@/components/FormField";
 
 export default function ProfilePage() {
-  const [name, setName] = useState("Jane Doe");
-  const [email, setEmail] = useState("jane@OneFlow.ac.in");
+  const [name, setName] = useState("Meet Patel");
+  const [email, setEmail] = useState("meet@OneFlow.ac.in");
   const [pwd, setPwd] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
   function onSave(e: React.FormEvent) {
     e.preventDefault();
-    setMsg("Profile saved (demo)");
+    setMsg("Profile saved successfully");
     setTimeout(() => setMsg(null), 1200);
   }
 
