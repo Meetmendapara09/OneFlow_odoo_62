@@ -49,22 +49,41 @@ async function fetchAPI<T>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorBody}`);
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log(`🌐 API Request: ${options?.method || 'GET'} ${url}`);
+  console.log(`📤 Request headers:`, headers);
+  if (options?.body) {
+    console.log(`📤 Request body:`, options.body);
   }
 
-  // Handle 204 No Content
-  if (response.status === 204) {
-    return null as T;
-  }
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  return response.json();
+    console.log(`📥 Response status: ${response.status} ${response.statusText}`);
+    console.log(`📥 Response headers:`, Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`❌ API Error Response:`, errorBody);
+      throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorBody}`);
+    }
+
+    // Handle 204 No Content
+    if (response.status === 204) {
+      console.log(`✅ 204 No Content - returning null`);
+      return null as T;
+    }
+
+    const data = await response.json();
+    console.log(`✅ API Success Response:`, data);
+    return data;
+  } catch (error) {
+    console.error(`❌ Fetch error:`, error);
+    throw error;
+  }
 }
 
 // Auth API

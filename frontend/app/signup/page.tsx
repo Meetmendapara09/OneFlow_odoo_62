@@ -41,19 +41,35 @@ export default function SignUpPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    console.log("✅ handleSubmit called"); // should fire now
+    console.log("✅ handleSubmit called");
+    console.log("📝 Form data:", { username, email, password: "***" });
 
     setServerError(null);
-    if (!validate()) return;
 
+    if (!validate()) {
+      console.log("❌ Validation failed:", errors);
+      return;
+    }
+
+    console.log("✅ Validation passed, calling API...");
     setSubmitting(true);
+
     try {
-      await authAPI.signup({ username, email, password });
+      console.log("🔄 Calling authAPI.signup...");
+      const response = await authAPI.signup({ username, email, password });
+      console.log("✅ Signup API response:", response);
+      console.log("🎉 Signup successful! Redirecting to signin...");
       router.push("/signin");
     } catch (err) {
+      console.error("❌ Signup error:", err);
+      console.error("❌ Error details:", {
+        message: err instanceof Error ? err.message : "Unknown error",
+        stack: err instanceof Error ? err.stack : undefined
+      });
       const message = err instanceof Error ? err.message : "Sign up failed";
       setServerError(message);
     } finally {
+      console.log("🏁 Signup process completed, submitting:", false);
       setSubmitting(false);
     }
   }

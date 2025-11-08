@@ -36,6 +36,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Skip JWT validation entirely for auth endpoints (signup, signin)
+        String requestPath = request.getRequestURI();
+        if (requestPath.startsWith("/api/auth/")) {
+            logger.info("Skipping JWT validation for auth endpoint: " + requestPath);
+            chain.doFilter(request, response);
+            return;
+        }
+
         final String requestTokenHeader = request.getHeader("Authorization");
 
         String username = null;
@@ -46,12 +54,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.getUsernameFromToken(jwtToken);
             } catch (IllegalArgumentException e) {
-                System.out.println("Unable to get JWT Token");
+                logger.error("Unable to get JWT Token", e);
             } catch (ExpiredJwtException e) {
-                System.out.println("JWT Token has expired");
+                logger.error("JWT Token has expired", e);
+            } catch (Exception e) {
+                logger.error("Error parsing JWT Token", e);
             }
-        } else if (!request.getRequestURI().startsWith("/api/auth/")) {
-            logger.warn("JWT Token does not begin with Bearer String");
+        } else {
+            logger.debug("JWT Token does not begin with Bearer String for: " + requestPath);
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {

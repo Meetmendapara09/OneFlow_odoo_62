@@ -3,6 +3,8 @@ package com.example.oneflow.controller;
 import com.example.oneflow.model.User;
 import com.example.oneflow.repository.UserRepository;
 import com.example.oneflow.util.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -30,17 +34,22 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@RequestBody User user) {
+        logger.info("🔐 Signin request received for username: {}", user.getUsername());
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateToken(authentication);
+        logger.info("✅ Signin successful for username: {}", user.getUsername());
         return ResponseEntity.ok(new TokenResponse(jwt));
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
+        logger.info("📝 Signup request received for username: {}, email: {}", user.getUsername(), user.getEmail());
+
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            logger.warn("⚠️ Username already exists: {}", user.getUsername());
             return ResponseEntity.badRequest().body(new MessageResponse("Error: Username is already taken!"));
         }
 
@@ -50,7 +59,9 @@ public class AuthController {
         newUser.setEmail(user.getEmail());
         newUser.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        userRepository.save(newUser);
+        logger.debug("💾 Saving user to database: {}", user.getUsername());
+        User savedUser = userRepository.save(newUser);
+        logger.info("✅ User saved successfully! ID: {}, Username: {}", savedUser.getId(), savedUser.getUsername());
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }

@@ -1,39 +1,37 @@
 package com.example.oneflow.service;
 
 import com.example.oneflow.model.Project;
+import com.example.oneflow.repository.ProjectRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProjectService {
-    private final Map<String, Project> projects = new ConcurrentHashMap<>();
-    private final AtomicInteger idCounter = new AtomicInteger(3);
 
-    public ProjectService() {
-        // Initialize with sample data
-        projects.put("p1", new Project("p1", "Student Portal Revamp", 
-            "Revamp of the student-facing portal UI", "Jane", "In Progress", 
-            35, "2025-12-31", 5, 3, 10));
-        projects.put("p2", new Project("p2", "HRMS Integration", 
-            "Integrate HR APIs", "Raj", "Planned", 
-            10, "2026-01-15", null, null, null));
-    }
+    @Autowired
+    private ProjectRepository projectRepository;
 
     public List<Project> getAllProjects() {
-        return new ArrayList<>(projects.values());
+        return projectRepository.findAll();
     }
 
-    public Optional<Project> getProjectById(String id) {
-        return Optional.ofNullable(projects.get(id));
+    public Optional<Project> getProjectById(Long id) {
+        return projectRepository.findById(id);
+    }
+
+    public Optional<Project> getProjectByStringId(String id) {
+        try {
+            Long longId = Long.parseLong(id.replace("p", ""));
+            return projectRepository.findById(longId);
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 
     public Project createProject(Project project) {
-        String newId = "p" + idCounter.getAndIncrement();
-        project.setId(newId);
-        
         // Set defaults if not provided
         if (project.getProgress() == 0) {
             project.setProgress(0);
@@ -45,21 +43,21 @@ public class ProjectService {
             project.setTotalTasks(0);
         }
         
-        projects.put(newId, project);
-        return project;
+        return projectRepository.save(project);
     }
 
-    public Optional<Project> updateProject(String id, Project updatedProject) {
-        if (!projects.containsKey(id)) {
-            return Optional.empty();
+    public Optional<Project> updateProject(Long id, Project updatedProject) {
+        return projectRepository.findById(id).map(existingProject -> {
+            updatedProject.setId(id);
+            return projectRepository.save(updatedProject);
+        });
+    }
+
+    public boolean deleteProject(Long id) {
+        if (projectRepository.existsById(id)) {
+            projectRepository.deleteById(id);
+            return true;
         }
-        
-        updatedProject.setId(id);
-        projects.put(id, updatedProject);
-        return Optional.of(updatedProject);
-    }
-
-    public boolean deleteProject(String id) {
-        return projects.remove(id) != null;
+        return false;
     }
 }
