@@ -1,1 +1,0 @@
-# iitgn_odoo
