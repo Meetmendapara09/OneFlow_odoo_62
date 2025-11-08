@@ -13,17 +13,22 @@ public class WebConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**")
-                        .allowedOriginPatterns(
-                            "http://localhost:*",
-                            "http://127.0.0.1:*",
-                            "https://*.app.github.dev"
-                        )
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(true)
-                        .maxAge(3600);
-            }
+            //     registry.addMapping("/api/**")
+            //             .allowedOriginPatterns(
+            //                 // "http://localhost:*",
+            //                 // "http://127.0.0.1:*",
+            //                 // "https://*.app.github.dev"
+
+            //             )
+            //             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            //             .allowedHeaders("*")
+            //             .allowCredentials(true)
+            //             .maxAge(3600);
+            // 
+                registry.addMapping("/**")
+                        .allowedOrigins("*")
+                        .allowedMethods("*");
+        }
         };
     }
 }

@@ -64,6 +64,25 @@ function TasksContent() {
     due: "",
   });
 
+  // Load tasks from backend on mount
+  useEffect(() => {
+    const loadTasks = async () => {
+      try {
+        setLoading(true);
+        setApiError(null);
+        const data = await taskAPI.list();
+        setTasks(data);
+      } catch (error) {
+        console.error('Failed to load tasks:', error);
+        setApiError('Failed to load tasks from server');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTasks();
+  }, []);
+
   // Handle edit query parameter on mount
   useEffect(() => {
     if (hasInitialized.current) return;
@@ -213,7 +232,7 @@ function TasksContent() {
     return () => document.removeEventListener('keydown', handleGlobalKeyDown);
   }, [handleUndo, handleRedo]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -221,46 +240,57 @@ function TasksContent() {
     const selectedProject = PROJECTS.find(p => p.id === formData.projectId);
     if (!selectedProject) return;
 
-    if (editingTask) {
-      const updatedTask = {
-        ...editingTask,
-        title: formData.title,
-        description: formData.description,
-        project: selectedProject.name,
-        projectId: formData.projectId,
-        assignee: formData.assignee,
-        due: formData.due,
-        priority: formData.priority,
-        state: formData.state,
-        tags: formData.tags ? formData.tags.split(",").map(tag => tag.trim()) : [],
-      };
-      setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
-      addToHistory({ type: 'update', task: updatedTask, previousTask: editingTask, timestamp: Date.now() });
-    } else {
-      const newTask: Task = {
-        id: `t${tasks.length + 1}`,
-        title: formData.title,
-        description: formData.description,
-        project: selectedProject.name,
-        projectId: formData.projectId,
-        assignee: formData.assignee,
-        due: formData.due,
-        priority: formData.priority,
-        state: formData.state,
-        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : [],
-        subtaskProgress: { completed: 0, total: 0 },
-      };
-      setTasks([...tasks, newTask]);
-      addToHistory({ type: 'create', task: newTask, timestamp: Date.now() });
-    }
+    try {
+      if (editingTask) {
+        // Update existing task via API
+        const updatedTask = await taskAPI.update(editingTask.id, {
+          ...editingTask,
+          title: formData.title,
+          description: formData.description,
+          project: selectedProject.name,
+          projectId: formData.projectId,
+          assignee: formData.assignee,
+          due: formData.due,
+          priority: formData.priority,
+          state: formData.state,
+          tags: formData.tags ? formData.tags.split(",").map(tag => tag.trim()) : [],
+        });
+        
+        setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
+        addToHistory({ type: 'update', task: updatedTask, previousTask: editingTask, timestamp: Date.now() });
+      } else {
+        // Create new task via API
+        const newTask = await taskAPI.create({
+          title: formData.title,
+          description: formData.description,
+          project: selectedProject.name,
+          projectId: formData.projectId,
+          assignee: formData.assignee,
+          due: formData.due,
+          priority: formData.priority,
+          state: formData.state,
+          tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : [],
+          subtaskProgress: { completed: 0, total: 0 },
+        });
+        
+        setTasks([...tasks, newTask]);
+        addToHistory({ type: 'create', task: newTask, timestamp: Date.now() });
+      }
 
-    const draftKey = editingTask ? `task-draft-${editingTask.id}` : 'task-draft-new';
-    localStorage.removeItem(draftKey);
-    setShowModal(false);
-    setEditingTask(null);
-    setHasUnsavedChanges(false);
-    setFormData({ title: "", description: "", projectId: "", assignee: "Jane", due: "", priority: "Medium", state: "New", tags: "" });
-    setErrors({ title: "", description: "", projectId: "", due: "" });
+      // Clear draft from localStorage
+      const draftKey = editingTask ? `task-draft-${editingTask.id}` : 'task-draft-new';
+      localStorage.removeItem(draftKey);
+      
+      setShowModal(false);
+      setEditingTask(null);
+      setHasUnsavedChanges(false);
+      setFormData({ title: "", description: "", projectId: "", assignee: "Jane", due: "", priority: "Medium", state: "New", tags: "" });
+      setErrors({ title: "", description: "", projectId: "", due: "" });
+    } catch (error) {
+      console.error('Failed to save task:', error);
+      setApiError('Failed to save task. Please try again.');
+      alert('Failed to save task. Please try again.');
+    }
   };
 
   const handleEdit = (taskId: string) => {
@@ -284,12 +314,21 @@ function TasksContent() {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (taskToDelete) {
       const task = tasks.find(t => t.id === taskToDelete);
       if (task) {
-        setTasks(tasks.filter(t => t.id !== taskToDelete));
-        addToHistory({ type: 'delete', task: task, timestamp: Date.now() });
+        try {
+          // Delete from backend
+          await taskAPI.delete(taskToDelete);
+          
+          // Update local state
+          setTasks(tasks.filter(t => t.id !== taskToDelete));
+          addToHistory({ type: 'delete', task: task, timestamp: Date.now() });
+        } catch (error) {
+          console.error('Failed to delete task:', error);
+          alert('Failed to delete task. Please try again.');
+        }
       }
     }
     setShowDeleteConfirm(false);
@@ -334,6 +373,32 @@ function TasksContent() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="loading loading-spinner loading-lg"></div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (apiError) {
+    return (
+      <div className="space-y-6">
+        <div className="alert alert-error">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{apiError}</span>
+          <button className="btn btn-sm" onClick={() => window.location.reload()}>
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

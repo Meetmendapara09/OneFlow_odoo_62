@@ -5,20 +5,23 @@ import Link from "next/link";
 import AuthCard from "@/components/AuthCard";
 import FormField from "@/components/FormField";
 
-interface Errors { name?: string; email?: string; password?: string; confirm?: string; }
+import { authAPI } from "@/lib/api";
+
+interface Errors { username?: string; email?: string; password?: string; confirm?: string; }
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   function validate(): boolean {
     const next: Errors = {};
-    if (!name) next.name = "Name is required";
+    if (!username) next.username = "Username is required";
     if (!email) next.email = "Email is required";
     else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) next.email = "Invalid email";
     if (!password) next.password = "Password is required";
@@ -31,22 +34,40 @@ export default function SignUpPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setServerError(null);
     if (!validate()) return;
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 700));
-    router.push("/signin");
+    try {
+      await authAPI.signup({ username, email, password });
+      router.push("/signin");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Sign up failed";
+      setServerError(message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <AuthCard title="Create account" subtitle="Join the OneFlow Portal">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <FormField
-          id="name"
+          id="username"
           type="text"
-          label="Full name"
-          autoComplete="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          label="Username"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          error={errors.username}
+          placeholder="your_username"
+        />
+        <FormField
+          id="email"
+          type="email"
+          label="Email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           error={errors.name}
           placeholder="Jane Doe"
         />
@@ -80,6 +101,11 @@ export default function SignUpPage() {
           error={errors.confirm}
           placeholder="Repeat your password"
         />
+        {serverError && (
+          <div className="alert alert-error py-2 text-sm">
+            <span>{serverError}</span>
+          </div>
+        )}
         <div className="text-xs">
           Already have an account? {""}
           <Link href="/signin" className="link link-primary">Sign in</Link>

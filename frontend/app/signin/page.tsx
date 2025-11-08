@@ -1,13 +1,17 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AuthCard from "@/components/AuthCard";
 import FormField from "@/components/FormField";
 
-interface Errors { email?: string; password?: string; }
+import { authAPI } from "@/lib/api";
+
+interface Errors { username?: string; password?: string; }
 
 export default function SignInPage() {
-  const [email, setEmail] = useState("");
+  const router = useRouter();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -15,8 +19,7 @@ export default function SignInPage() {
 
   function validate() {
     const next: Errors = {};
-    if (!email) next.email = "Email required";
-    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) next.email = "Invalid email";
+    if (!username) next.username = "Username required";
     if (!password) next.password = "Password required";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -28,10 +31,9 @@ export default function SignInPage() {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      // Placeholder: replace with real login API call when backend endpoint exists
-      await new Promise(r => setTimeout(r, 500));
-      // success: redirect or set state
-      window.location.href = "/";
+      const token = await authAPI.signin({ username, password });
+      localStorage.setItem("token", token);
+      router.push("/dashboard");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed";
       setServerError(message);
@@ -44,14 +46,14 @@ export default function SignInPage() {
     <AuthCard title="Sign In" subtitle="Access your account">
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         <FormField
-          id="email"
-          type="email"
-          label="Email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          error={errors.email}
-          placeholder="you@example.com"
+          id="username"
+          type="text"
+          label="Username"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          error={errors.username}
+          placeholder="your_username"
         />
         <FormField
           id="password"

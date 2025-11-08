@@ -36,16 +36,24 @@ async function fetchAPI<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options?.headers,
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
     ...options,
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    const errorBody = await response.text();
+    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorBody}`);
   }
 
   // Handle 204 No Content
@@ -55,6 +63,20 @@ async function fetchAPI<T>(
 
   return response.json();
 }
+
+// Auth API
+export const authAPI = {
+  signin: (credentials: {username:string, password:string}) =>
+    fetchAPI<string>('/auth/signin', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    }),
+  signup: (userInfo: {username:string, email:string, password:string}) =>
+    fetchAPI<{message: string}>('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(userInfo),
+    }),
+};
 
 // Project API
 export const projectAPI = {
