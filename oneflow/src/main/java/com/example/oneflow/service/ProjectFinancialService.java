@@ -56,8 +56,8 @@ public class ProjectFinancialService {
         BigDecimal expensesCost = expenseRepository.getTotalApprovedExpensesByProject(projectId);
         expensesCost = expensesCost != null ? expensesCost : BigDecimal.ZERO;
 
-        BigDecimal timesheetCost = timesheetRepository.getTotalCostByProject(projectId);
-        timesheetCost = timesheetCost != null ? timesheetCost : BigDecimal.ZERO;
+        Double timesheetCostDouble = timesheetRepository.getTotalCostByProject(projectId);
+        BigDecimal timesheetCost = timesheetCostDouble != null ? BigDecimal.valueOf(timesheetCostDouble) : BigDecimal.ZERO;
 
         BigDecimal totalCost = billsCost.add(expensesCost).add(timesheetCost);
 
@@ -76,11 +76,11 @@ public class ProjectFinancialService {
         purchaseOrderCost = purchaseOrderCost != null ? purchaseOrderCost : BigDecimal.ZERO;
 
         // Billable vs Non-billable
-        BigDecimal billableHours = timesheetRepository.getBillableHoursByProject(projectId);
-        billableHours = billableHours != null ? billableHours : BigDecimal.ZERO;
+        Double billableHoursDouble = timesheetRepository.getBillableHoursByProject(projectId);
+        BigDecimal billableHours = billableHoursDouble != null ? BigDecimal.valueOf(billableHoursDouble) : BigDecimal.ZERO;
 
-        BigDecimal totalHours = timesheetRepository.getTotalHoursByProject(projectId);
-        totalHours = totalHours != null ? totalHours : BigDecimal.ZERO;
+        Double totalHoursDouble = timesheetRepository.getTotalHoursByProject(projectId);
+        BigDecimal totalHours = totalHoursDouble != null ? BigDecimal.valueOf(totalHoursDouble) : BigDecimal.ZERO;
 
         BigDecimal billableExpenses = expenseRepository.getTotalBillableExpensesByProject(projectId);
         billableExpenses = billableExpenses != null ? billableExpenses : BigDecimal.ZERO;
@@ -138,7 +138,7 @@ public class ProjectFinancialService {
         counts.put("purchaseOrders", (long) purchaseOrderRepository.findByProjectId(projectId).size());
         counts.put("vendorBills", (long) vendorBillRepository.findByProjectId(projectId).size());
         counts.put("expenses", (long) expenseRepository.findByProjectId(projectId).size());
-        counts.put("timesheets", (long) timesheetRepository.findByProjectId(projectId).size());
+        counts.put("timesheets", (long) timesheetRepository.findByProjectIdOrderByWorkDateDesc(projectId).size());
 
         return counts;
     }

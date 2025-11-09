@@ -40,6 +40,14 @@ public interface TimesheetRepository extends JpaRepository<Timesheet, Long> {
     @Query("SELECT SUM(t.totalCost) FROM Timesheet t WHERE t.projectId = :projectId")
     Double getTotalCostByProject(@Param("projectId") Long projectId);
 
+    // Get total hours for project
+    @Query("SELECT SUM(t.hoursWorked) FROM Timesheet t WHERE t.projectId = :projectId")
+    Double getTotalHoursByProject(@Param("projectId") Long projectId);
+
+    // Get billable hours for project
+    @Query("SELECT SUM(t.hoursWorked) FROM Timesheet t WHERE t.projectId = :projectId AND t.billingStatus = 'BILLED'")
+    Double getBillableHoursByProject(@Param("projectId") Long projectId);
+
     // Get billed vs non-billed totals
     @Query("SELECT t.billingStatus, SUM(t.totalCost) FROM Timesheet t GROUP BY t.billingStatus")
     List<Object[]> getBillingStatusTotals();
