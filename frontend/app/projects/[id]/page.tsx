@@ -2,6 +2,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PROJECTS = [
   { id: "p1", name: "Student Portal Revamp", description: "UI modernization and performance work for the student portal. This includes updating the design system, improving load times, and implementing new features requested by students.", manager: "A. Patel", status: "In Progress" as const, progress: 65, deadline: "2025-12-01", teamSize: 5, tasksCompleted: 13, totalTasks: 20, budget: 125000, spent: 78000 },
@@ -46,6 +47,7 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.id as string;
+  const { user, hasAnyRole } = useAuth();
 
   const project = useMemo(() => {
     return PROJECTS.find(p => p.id === projectId);
@@ -58,6 +60,13 @@ export default function ProjectDetailPage() {
   const team = useMemo(() => {
     return TEAM_MEMBERS[projectId as keyof typeof TEAM_MEMBERS] || [];
   }, [projectId]);
+
+  // Role-based permissions
+  const canManageProject = hasAnyRole(['SUPERADMIN', 'PROJECT_MANAGER']);
+  const canManageTasks = hasAnyRole(['SUPERADMIN', 'PROJECT_MANAGER']);
+  const canManageTeam = hasAnyRole(['SUPERADMIN', 'PROJECT_MANAGER']);
+  const canViewReports = hasAnyRole(['SUPERADMIN', 'PROJECT_MANAGER', 'SALES_FINANCE']);
+  const canManageFinancials = hasAnyRole(['SUPERADMIN', 'SALES_FINANCE']);
 
   // Modal states
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
@@ -370,7 +379,85 @@ export default function ProjectDetailPage() {
             </div>
           </div>
 
+          {/* Quick Actions - Role-based */}
+          <div className="card card-warning">
+            <div className="card-body">
+              <h2 className="card-title mb-4">Quick Actions</h2>
+              <div className="space-y-2">
+                {/* Edit Project - Project Manager & Admin only */}
+                {canManageProject && (
+                  <Link href={`/projects?edit=${projectId}`} className="btn btn-outline btn-sm w-full justify-start">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Project
+                  </Link>
+                )}
 
+                {/* Add Task - Project Manager & Admin only */}
+                {canManageTasks && (
+                  <button
+                    onClick={() => setShowAddTaskModal(true)}
+                    className="btn btn-outline btn-sm w-full justify-start"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Task
+                  </button>
+                )}
+
+                {/* Manage Team - Project Manager & Admin only */}
+                {canManageTeam && (
+                  <button
+                    onClick={() => setShowManageTeamModal(true)}
+                    className="btn btn-outline btn-sm w-full justify-start"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Manage Team
+                  </button>
+                )}
+
+                {/* View Reports - Project Manager, Sales/Finance & Admin */}
+                {canViewReports && (
+                  <button
+                    onClick={() => setShowReportsModal(true)}
+                    className="btn btn-outline btn-sm w-full justify-start"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    View Reports
+                  </button>
+                )}
+
+                {/* Financial Management - Sales/Finance & Admin only */}
+                {canManageFinancials && (
+                  <button
+                    onClick={() => router.push(`/projects/${projectId}/financials`)}
+                    className="btn btn-outline btn-sm w-full justify-start"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Manage Financials
+                  </button>
+                )}
+
+                {/* Message if no actions available */}
+                {!canManageProject && !canManageTasks && !canManageTeam && !canViewReports && !canManageFinancials && (
+                  <div className="alert alert-info text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>No actions available for your role</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

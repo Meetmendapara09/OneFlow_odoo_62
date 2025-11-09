@@ -34,6 +34,7 @@ export default function Navbar() {
               <Link href="/projects" className="hover:text-primary transition-colors">Projects</Link>
               <Link href="/tasks" className="hover:text-primary transition-colors">Tasks</Link>
               <Link href="/analytics" className="hover:text-primary transition-colors">Analytics</Link>
+              <Link href="/financials" className="hover:text-primary transition-colors">Financials</Link>
               <Link href="/profile" className="hover:text-primary transition-colors">Profile</Link>
 
               {/* User dropdown */}
@@ -48,19 +49,11 @@ export default function Navbar() {
                   <span className="badge badge-sm badge-secondary">{user?.role?.replace('_', ' ')}</span>
                 </label>
                 <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-lg bg-base-100 rounded-box w-52 mt-2 border border-base-300">
-                  <li className="menu-title">
-                    <span className="text-xs">Signed in as</span>
-                    <span className="font-semibold truncate">{user?.username}</span>
-                    <span className="badge badge-sm badge-secondary mt-1">{user?.role?.replace('_', ' ')}</span>
-                  </li>
-                  <li><Link href="/profile">👤 Profile</Link></li>
-                  <li><Link href="/dashboard">📊 Dashboard</Link></li>
                   {isAdmin() && (
                     <>
                       <div className="divider my-0"></div>
                       <li className="menu-title"><span className="text-xs">Admin</span></li>
                       <li><Link href="/admin/users">👥 Manage Users</Link></li>
-                      <li><Link href="/admin/settings">⚙️ Settings</Link></li>
                     </>
                   )}
                   <div className="divider my-0"></div>
