@@ -13,9 +13,10 @@ import {
 } from "lucide-react";
 
 const PRIORITY_ORDER: Record<Task["priority"], number> = {
-  High: 0,
-  Medium: 1,
-  Low: 2,
+  Critical:0,
+  High: 1,
+  Medium: 2,
+  Low: 3,
 };
 
 function formatDate(input: string) {

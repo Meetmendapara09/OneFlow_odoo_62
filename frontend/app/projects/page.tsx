@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect, useRef, useCallback, Suspense } fr
 import { useSearchParams } from "next/navigation";
 import ProjectCard from "@/components/ProjectCard";
 import { projectAPI, type Project } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 type HistoryAction = {
   type: 'create' | 'update' | 'delete';
@@ -16,6 +17,7 @@ const MANAGERS = ["A. Patel", "R. Singh", "S. Kumar", "N. Shah", "V. Mehta", "K.
 
 function ProjectsContent() {
   const searchParams = useSearchParams();
+  const { hasAnyRole } = useAuth();
   const hasInitialized = useRef(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -611,12 +613,18 @@ function ProjectsContent() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button className="btn btn-primary gap-2" onClick={() => setShowModal(true)}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-            </svg>
-            New Project
-          </button>
+          {hasAnyRole(['PROJECT_MANAGER', 'SUPERADMIN']) && (
+            <button 
+              className="btn btn-primary gap-2" 
+              onClick={() => setShowModal(true)}
+              title="Create Project (Project Manager only)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              New Project
+            </button>
+          )}
         </div>
       </div>
       {/* Metrics Cards */}

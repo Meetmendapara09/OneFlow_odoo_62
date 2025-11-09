@@ -3,6 +3,7 @@ import React, { useMemo, useState, useEffect, useRef, useCallback, Suspense } fr
 import { useSearchParams } from "next/navigation";
 import TaskCard from "@/components/TaskCard";
 import { taskAPI, type Task } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 type HistoryAction = {
   type: 'create' | 'update' | 'delete';
@@ -26,6 +27,7 @@ const PROJECTS = [
 const TEAM_MEMBERS = ["Jane", "Raj", "Sara", "Neil", "V. Mehta", "K. Desai"];
 
 function TasksContent() {
+  const { user } = useAuth();
   const searchParams = useSearchParams();
   const hasInitialized = useRef(false);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -111,22 +113,23 @@ function TasksContent() {
   }, [searchParams, tasks]);
 
   const filtered = useMemo(() => {
-    const me = "Jane"; // placeholder: current user
+    const currentUser = user?.username || "Jane"; // Use actual user or fallback
     return tasks.filter(t =>
       (state === "All" || t.state === state) &&
       (query.trim() === "" || t.title.toLowerCase().includes(query.toLowerCase())) &&
-      (!mineOnly || t.assignee === me)
+      (!mineOnly || t.assignee === currentUser)
     );
-  }, [tasks, query, state, mineOnly]);
+  }, [tasks, query, state, mineOnly, user]);
 
   const stats = useMemo(() => {
+    const currentUser = user?.username || "Jane"; // Use actual user or fallback
     const total = tasks.length;
     const inProgress = tasks.filter(t => t.state === "In Progress").length;
     const done = tasks.filter(t => t.state === "Done").length;
     const newTasks = tasks.filter(t => t.state === "New").length;
-    const myTasks = tasks.filter(t => t.assignee === "Jane").length; // placeholder
+    const myTasks = tasks.filter(t => t.assignee === currentUser).length;
     return { total, inProgress, done, newTasks, myTasks };
-  }, [tasks]);
+  }, [tasks, user]);
 
   // Auto-save, unsaved changes tracking, keyboard shortcuts, validation, history - same pattern as projects
   useEffect(() => {

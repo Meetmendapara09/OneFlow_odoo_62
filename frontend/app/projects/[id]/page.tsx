@@ -1,7 +1,8 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { Settings, ShoppingCart, FileText, Package, Receipt, DollarSign, Clock, TrendingUp, TrendingDown } from "lucide-react";
 
 const PROJECTS = [
   { id: "p1", name: "Student Portal Revamp", description: "UI modernization and performance work for the student portal. This includes updating the design system, improving load times, and implementing new features requested by students.", manager: "A. Patel", status: "In Progress" as const, progress: 65, deadline: "2025-12-01", teamSize: 5, tasksCompleted: 13, totalTasks: 20, budget: 125000, spent: 78000 },
@@ -50,6 +51,37 @@ export default function ProjectDetailPage() {
   const [financials, setFinancials] = useState<any>(null);
   const [docCounts, setDocCounts] = useState<any>(null);
   const [loadingFinancials, setLoadingFinancials] = useState(true);
+
+  // Fetch financial data for numeric project IDs
+  useEffect(() => {
+    const fetchFinancials = async () => {
+      if (!isNaN(parseInt(projectId))) {
+        try {
+          const [financialRes, countsRes] = await Promise.all([
+            fetch(`http://localhost:8080/api/projects/${projectId}/financials/summary`),
+            fetch(`http://localhost:8080/api/projects/${projectId}/financials/document-counts`)
+          ]);
+          
+          if (financialRes.ok) {
+            const data = await financialRes.json();
+            setFinancials(data);
+          }
+          if (countsRes.ok) {
+            const data = await countsRes.json();
+            setDocCounts(data);
+          }
+        } catch (error) {
+          console.error('Error fetching financials:', error);
+        } finally {
+          setLoadingFinancials(false);
+        }
+      } else {
+        setLoadingFinancials(false);
+      }
+    };
+
+    fetchFinancials();
+  }, [projectId]);
 
   const project = useMemo(() => {
     return PROJECTS.find(p => p.id === projectId);
@@ -151,8 +183,78 @@ export default function ProjectDetailPage() {
           Back
         </button>
   <h1 className="text-3xl font-bold flex-1 text-[#1E293B]">{project.name}</h1>
-  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadgeClasses[project.status]}`}>{project.status}</span>
+  <div className="flex items-center gap-2">
+    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${statusBadgeClasses[project.status]}`}>{project.status}</span>
+    <Link href={`/projects/${projectId}/settings`} className="btn btn-primary btn-sm gap-2">
+      <Settings className="w-4 h-4" />
+      Settings
+    </Link>
+  </div>
       </div>
+
+      {/* Quick Links Panel */}
+      {!isNaN(parseInt(projectId)) && docCounts && (
+        <div className="card bg-white border border-[#E2E8F0] shadow-sm">
+          <div className="card-body">
+            <h2 className="text-lg font-semibold text-[#1E293B] mb-4">Quick Links - Financial Documents</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <Link 
+                href={`/sales-orders?project=${projectId}`}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors"
+              >
+                <ShoppingCart className="w-6 h-6 text-blue-600" />
+                <span className="text-sm font-semibold text-blue-900">Sales Orders</span>
+                <span className="text-xs text-blue-600">{docCounts.salesOrders || 0} linked</span>
+              </Link>
+              
+              <Link 
+                href={`/invoices?project=${projectId}`}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
+              >
+                <FileText className="w-6 h-6 text-green-600" />
+                <span className="text-sm font-semibold text-green-900">Invoices</span>
+                <span className="text-xs text-green-600">{docCounts.invoices || 0} linked</span>
+              </Link>
+              
+              <Link 
+                href={`/purchase-orders?project=${projectId}`}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-purple-200 bg-purple-50 hover:bg-purple-100 transition-colors"
+              >
+                <Package className="w-6 h-6 text-purple-600" />
+                <span className="text-sm font-semibold text-purple-900">Purchase Orders</span>
+                <span className="text-xs text-purple-600">{docCounts.purchaseOrders || 0} linked</span>
+              </Link>
+              
+              <Link 
+                href={`/vendor-bills?project=${projectId}`}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-red-200 bg-red-50 hover:bg-red-100 transition-colors"
+              >
+                <Receipt className="w-6 h-6 text-red-600" />
+                <span className="text-sm font-semibold text-red-900">Vendor Bills</span>
+                <span className="text-xs text-red-600">{docCounts.vendorBills || 0} linked</span>
+              </Link>
+              
+              <Link 
+                href={`/expenses?project=${projectId}`}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-orange-200 bg-orange-50 hover:bg-orange-100 transition-colors"
+              >
+                <DollarSign className="w-6 h-6 text-orange-600" />
+                <span className="text-sm font-semibold text-orange-900">Expenses</span>
+                <span className="text-xs text-orange-600">{docCounts.expenses || 0} linked</span>
+              </Link>
+              
+              <Link 
+                href={`/timesheets?project=${projectId}`}
+                className="flex flex-col items-center gap-2 p-4 rounded-lg border-2 border-indigo-200 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+              >
+                <Clock className="w-6 h-6 text-indigo-600" />
+                <span className="text-sm font-semibold text-indigo-900">Timesheets</span>
+                <span className="text-xs text-indigo-600">{docCounts.timesheets || 0} linked</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Project Overview Card */}
       <div className="card bg-white border border-[#E2E8F0] shadow-sm">

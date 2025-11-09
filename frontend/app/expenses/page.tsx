@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Plus, Receipt, Check, X, Clock } from "lucide-react";
+import { Plus, Receipt, Check, X, Clock, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Expense {
   id: number;
@@ -26,11 +27,16 @@ interface Expense {
 const CATEGORIES = ["Travel", "Food", "Supplies", "Software", "Other"];
 
 export default function ExpensesPage() {
+  const { user, hasAnyRole } = useAuth();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [filterStatus, setFilterStatus] = useState("All");
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [formData, setFormData] = useState({
     projectId: "",
     taskId: "",
@@ -43,7 +49,53 @@ export default function ExpensesPage() {
 
   const fetchExpenses = async () => {
     try {
-      // TODO: Replace with actual API call
+      const response = await fetch("http://localhost:8080/api/expenses", {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setExpenses(data);
+      } else {
+        // Fallback to mock data if API fails
+        const mockData: Expense[] = [
+          {
+            id: 1,
+            expenseNumber: "EXP-001",
+            userId: 1,
+            projectId: 1,
+            expenseDate: "2025-11-05",
+            amount: 1500,
+            currency: "USD",
+            category: "Travel",
+            description: "Client meeting travel",
+            status: "Approved",
+            billable: true,
+            submittedDate: "2025-11-05T10:00:00",
+            approvedDate: "2025-11-06T14:30:00",
+          },
+          {
+            id: 2,
+            expenseNumber: "EXP-002",
+            userId: 1,
+            projectId: 1,
+            expenseDate: "2025-11-07",
+            amount: 450,
+            currency: "USD",
+            category: "Software",
+            description: "Design tool subscription",
+            status: "Submitted",
+            billable: false,
+            submittedDate: "2025-11-07T16:00:00",
+          },
+        ];
+        setExpenses(mockData);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching expenses:", error);
+      // Use mock data as fallback
       const mockData: Expense[] = [
         {
           id: 1,
@@ -77,9 +129,6 @@ export default function ExpensesPage() {
       ];
       setExpenses(mockData);
       setLoading(false);
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-      setLoading(false);
     }
   };
 
@@ -89,13 +138,38 @@ export default function ExpensesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call
-    console.log("Creating/updating expense:", formData);
-    setShowModal(false);
-    resetForm();
-  };
+    try {
+      const url = editingExpense
+        ? `http://localhost:8080/api/expenses/${editingExpense.id}`
+        : "http://localhost:8080/api/expenses";
+      const method = editingExpense ? "PUT" : "POST";
 
-  const handleEdit = (expense: Expense) => {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          ...formData,
+          userId: 1, // TODO: Get from auth context
+          status: "Draft",
+        }),
+      });
+
+      if (response.ok) {
+        await fetchExpenses();
+        setShowModal(false);
+        resetForm();
+        alert(`Expense ${editingExpense ? "updated" : "created"} successfully!`);
+      } else {
+        alert("Failed to save expense");
+      }
+    } catch (error) {
+      console.error("Error saving expense:", error);
+      alert("Failed to save expense");
+    }
+  };  const handleEdit = (expense: Expense) => {
     setEditingExpense(expense);
     setFormData({
       projectId: expense.projectId?.toString() || "",
@@ -111,14 +185,93 @@ export default function ExpensesPage() {
 
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this expense?")) {
-      // TODO: Implement API call
-      setExpenses(expenses.filter((e) => e.id !== id));
+      try {
+        const response = await fetch(`http://localhost:8080/api/expenses/${id}`, {
+          method: "DELETE",
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          await fetchExpenses();
+          alert("Expense deleted successfully!");
+        } else {
+          alert("Failed to delete expense");
+        }
+      } catch (error) {
+        console.error("Error deleting expense:", error);
+        alert("Failed to delete expense");
+      }
     }
   };
 
   const handleStatusChange = async (id: number, action: string) => {
-    // TODO: Implement API call for submit/approve/reject
-    console.log(`${action} expense ${id}`);
+    try {
+      const response = await fetch(`http://localhost:8080/api/expenses/${id}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ approverId: 1 }) // TODO: Use actual user ID
+      });
+      
+      if (response.ok) {
+        await fetchExpenses();
+        alert(`Expense ${action}ed successfully!`);
+      }
+    } catch (error) {
+      console.error(`Error ${action}ing expense:`, error);
+      alert(`Failed to ${action} expense`);
+    }
+  };
+
+  const handleApprove = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setApprovalAction('approve');
+    setShowApprovalModal(true);
+  };
+
+  const handleReject = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setApprovalAction('reject');
+    setRejectionReason("");
+    setShowApprovalModal(true);
+  };
+
+  const confirmApproval = async () => {
+    if (!selectedExpense || !approvalAction) return;
+
+    try {
+      const endpoint = `http://localhost:8080/api/expenses/${selectedExpense.id}/${approvalAction}`;
+      const body = approvalAction === 'reject' 
+        ? { approverId: 1, reason: rejectionReason } // TODO: Use actual user ID
+        : { approverId: 1 };
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        await fetchExpenses();
+        setShowApprovalModal(false);
+        setSelectedExpense(null);
+        setApprovalAction(null);
+        setRejectionReason("");
+        alert(`Expense ${approvalAction}ed successfully!`);
+      } else {
+        alert(`Failed to ${approvalAction} expense`);
+      }
+    } catch (error) {
+      console.error(`Error ${approvalAction}ing expense:`, error);
+      alert(`Failed to ${approvalAction} expense`);
+    }
   };
 
   const resetForm = () => {
@@ -278,21 +431,34 @@ export default function ExpensesPage() {
                             </button>
                           </>
                         )}
-                        {expense.status === "Submitted" && (
+                        {expense.status === "Submitted" && hasAnyRole(['PROJECT_MANAGER', 'SUPERADMIN']) && (
                           <>
                             <button
-                              onClick={() => handleStatusChange(expense.id, "approve")}
+                              onClick={() => handleApprove(expense)}
                               className="btn btn-ghost btn-xs text-[#16A34A]"
+                              title="Approve expense (Project Manager only)"
                             >
+                              <ThumbsUp className="w-3 h-3 mr-1" />
                               Approve
                             </button>
                             <button
-                              onClick={() => handleStatusChange(expense.id, "reject")}
+                              onClick={() => handleReject(expense)}
                               className="btn btn-ghost btn-xs text-[#DC2626]"
+                              title="Reject expense (Project Manager only)"
                             >
+                              <ThumbsDown className="w-3 h-3 mr-1" />
                               Reject
                             </button>
                           </>
+                        )}
+                        {expense.status === "Approved" && hasAnyRole(['PROJECT_MANAGER', 'SALES_FINANCE', 'SUPERADMIN']) && (
+                          <button
+                            onClick={() => handleStatusChange(expense.id, "reimburse")}
+                            className="btn btn-ghost btn-xs text-[#9333EA]"
+                            title="Mark as reimbursed (Manager/Finance only)"
+                          >
+                            Mark Reimbursed
+                          </button>
                         )}
                         {expense.status === "Draft" && (
                           <button
@@ -431,6 +597,95 @@ export default function ExpensesPage() {
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Modal */}
+      {showApprovalModal && selectedExpense && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="card bg-base-100 w-full max-w-md">
+            <div className="card-body">
+              <h2 className="card-title text-xl font-bold text-[#1E293B]">
+                {approvalAction === 'approve' ? 'Approve Expense' : 'Reject Expense'}
+              </h2>
+              
+              <div className="space-y-4 mt-4">
+                <div className="bg-[#F8FAFC] p-4 rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-[#64748B]">Expense #</span>
+                    <span className="font-medium text-[#1E293B]">{selectedExpense.expenseNumber}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm text-[#64748B]">Amount</span>
+                    <span className="font-bold text-[#1E293B]">${selectedExpense.amount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-[#64748B]">Category</span>
+                    <span className="text-[#1E293B]">{selectedExpense.category}</span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-[#E2E8F0]">
+                    <span className="text-sm text-[#64748B] block mb-1">Description</span>
+                    <p className="text-sm text-[#1E293B]">{selectedExpense.description}</p>
+                  </div>
+                </div>
+
+                {approvalAction === 'reject' && (
+                  <div className="form-control">
+                    <label className="label text-sm font-medium text-[#1E293B]">
+                      Rejection Reason *
+                    </label>
+                    <textarea
+                      className="textarea textarea-bordered min-h-[100px]"
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Please provide a reason for rejection..."
+                      required
+                    />
+                  </div>
+                )}
+
+                {approvalAction === 'approve' && (
+                  <div className="alert alert-success bg-[#DCFCE7] border-[#16A34A]/20">
+                    <ThumbsUp className="w-5 h-5 text-[#16A34A]" />
+                    <span className="text-sm text-[#1E293B]">
+                      This expense will be marked as approved and ready for reimbursement.
+                    </span>
+                  </div>
+                )}
+
+                {approvalAction === 'reject' && (
+                  <div className="alert alert-error bg-[#FEE2E2] border-[#DC2626]/20">
+                    <ThumbsDown className="w-5 h-5 text-[#DC2626]" />
+                    <span className="text-sm text-[#1E293B]">
+                      This expense will be rejected and returned to the submitter.
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="card-actions justify-end mt-6 pt-4 border-t border-[#E2E8F0]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowApprovalModal(false);
+                    setSelectedExpense(null);
+                    setApprovalAction(null);
+                    setRejectionReason("");
+                  }}
+                  className="btn btn-ghost"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmApproval}
+                  disabled={approvalAction === 'reject' && !rejectionReason.trim()}
+                  className={`btn ${approvalAction === 'approve' ? 'btn-success' : 'btn-error'}`}
+                >
+                  {approvalAction === 'approve' ? 'Approve' : 'Reject'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
